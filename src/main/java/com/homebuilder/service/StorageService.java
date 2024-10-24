@@ -10,11 +10,11 @@ import java.util.List;
 public interface StorageService {
 
 	// CRUD-Operationen für SH-Nutzer (basierend auf Benutzer-ID)
-	Storage createStorage(Storage storage, Long ownerId);
-	List<Storage> getStoragesForUser(Long ownerId);
-	Storage getStorageForUser(Long storageId, Long ownerId);
-	Storage updateStorageForUser(Long storageId, Long ownerId, Storage storageDetails);
-	void deleteStorageForUser(Long storageId, Long ownerId);
+	Storage createStorageForUser(Storage storage, Long userId);
+	List<Storage> getAllStoragesFromUser(Long userId);
+	Storage getStorageByIdFromUser(Long storageId, Long userId);
+	Storage updateStorageForUser(Long storageId, Long userId, Storage storageDetails);
+	void deleteStorageForUser(Long storageId, Long userId);
 
 	// CRUD-Operationen für administrative Aufgaben (keine Einschränkung auf Benutzer-ID)
 	List<Storage> getAllStorages();

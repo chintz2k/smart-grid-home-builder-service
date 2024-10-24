@@ -1,5 +1,6 @@
 package com.homebuilder.security;
 
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -35,7 +36,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 		if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
 			String token = authorizationHeader.substring(7);
-			String username = jwtUtil.extractUsername(token);
+			String username;
+			try {
+				username = jwtUtil.extractUsername(token);
+			} catch (JwtException ex) {
+				response.setContentType("application/json");
+				response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+				response.getWriter().write("{\"error\": \"Invalid token\"}");
+				response.getWriter().flush();
+				return;
+			}
 			if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 				if (jwtUtil.isTokenValid(token, username)) {
 					String role = jwtUtil.extractRole(token);

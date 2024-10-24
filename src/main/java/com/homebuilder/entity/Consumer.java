@@ -1,6 +1,8 @@
 package com.homebuilder.entity;
 
 import jakarta.persistence.Entity;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * @author André Heinen
@@ -8,19 +10,12 @@ import jakarta.persistence.Entity;
 @Entity
 public class Consumer extends Device {
 
+	@NotNull(message = "Power consumption is required")
+	@DecimalMin(value = "0.001", inclusive = true, message = "Power consumption must be at least 0.001")
 	private double powerConsumption;
 
 	public Consumer() {
 
-	}
-
-	public Consumer(int powerConsumption) {
-		this.powerConsumption = powerConsumption;
-	}
-
-	public Consumer(String name, Long ownerId, double powerConsumption) {
-		super(name, ownerId);
-		this.powerConsumption = powerConsumption;
 	}
 
 	public double getPowerConsumption() {

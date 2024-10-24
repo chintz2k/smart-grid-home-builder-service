@@ -6,6 +6,7 @@ import com.homebuilder.exception.UnauthorizedAccessException;
 import com.homebuilder.security.JwtUtil;
 import com.homebuilder.service.ConsumerService;
 import io.jsonwebtoken.security.SignatureException;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,7 +14,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author André Heinen
@@ -34,18 +37,23 @@ public class ConsumerController {
 
 	// CRUD-Endpoints für SH-Nutzer
 	@PostMapping
-	public ResponseEntity<Consumer> createConsumer(@RequestBody Consumer consumer, Principal principal) {
-		return ResponseEntity.status(HttpStatus.CREATED).body(consumerService.createConsumerForUser(consumer, Long.valueOf(principal.getName())));
+	public ResponseEntity<Consumer> createConsumerForUser(@Valid @RequestBody Consumer consumer, Principal principal) {
+		if (principal != null) {
+			String token = ((UsernamePasswordAuthenticationToken) principal).getCredentials().toString();
+			Long userId = jwtUtil.extractUserId(token);
+			return ResponseEntity.status(HttpStatus.CREATED).body(consumerService.createConsumerForUser(consumer, userId));
+		} else {
+			throw new UnauthorizedAccessException("Unauthorized try to create consumer for user");
+		}
 	}
 
 	@GetMapping
-	public ResponseEntity<?> getConsumersForUser(Principal principal) {
+	public ResponseEntity<?> getAllConsumersFromUser(Principal principal) {
 		if (principal != null) {
 			try {
 				String token = ((UsernamePasswordAuthenticationToken) principal).getCredentials().toString();
 				Long userId = jwtUtil.extractUserId(token);
-				System.out.println(jwtUtil.getClaimsFromToken(token)); // TODO DEBUG
-				return ResponseEntity.ok(consumerService.getAllConsumersForUser(userId));
+				return ResponseEntity.ok(consumerService.getAllConsumersFromUser(userId));
 			} catch (SignatureException ex) {
 				throw new InvalidJwtException("Invalid JWT token signature");
 			} catch (Exception ex) {
@@ -58,23 +66,43 @@ public class ConsumerController {
 
 
 	@GetMapping("/{consumerId}")
-	public ResponseEntity<Consumer> getConsumerForUser(@PathVariable Long consumerId, Principal principal) {
-		return ResponseEntity.ok(consumerService.getConsumerByIdForUser(consumerId, Long.valueOf(principal.getName())));
+	public ResponseEntity<Consumer> getConsumerByIdFromUser(@PathVariable Long consumerId, Principal principal) {
+		if (principal != null) {
+			String token = ((UsernamePasswordAuthenticationToken) principal).getCredentials().toString();
+			Long userId = jwtUtil.extractUserId(token);
+			return ResponseEntity.ok(consumerService.getConsumerByIdFromUser(consumerId, userId));
+		} else {
+			throw new UnauthorizedAccessException("Unauthorized access to consumer for user");
+		}
 	}
 
 	@PutMapping("/{consumerId}")
-	public ResponseEntity<Consumer> updateConsumerForUser(@PathVariable Long consumerId, @RequestBody Consumer consumerDetails, Principal principal) {
-		return ResponseEntity.ok(consumerService.updateConsumerForUser(consumerId, Long.valueOf(principal.getName()), consumerDetails));
+	public ResponseEntity<Consumer> updateConsumerForUser(@PathVariable Long consumerId, @Valid @RequestBody Consumer consumerDetails, Principal principal) {
+		if (principal != null) {
+			String token = ((UsernamePasswordAuthenticationToken) principal).getCredentials().toString();
+			Long userId = jwtUtil.extractUserId(token);
+			return ResponseEntity.ok(consumerService.updateConsumerForUser(consumerId, userId, consumerDetails));
+		} else {
+			throw new UnauthorizedAccessException("Unauthorized try to update a consumer for user");
+		}
 	}
 
 	@DeleteMapping("/{consumerId}")
 	public ResponseEntity<?> deleteConsumerForUser(@PathVariable Long consumerId, Principal principal) {
-		consumerService.deleteConsumerForUser(consumerId, Long.valueOf(principal.getName()));
-		return ResponseEntity.ok().build();
+		if (principal != null) {
+			String token = ((UsernamePasswordAuthenticationToken) principal).getCredentials().toString();
+			Long userId = jwtUtil.extractUserId(token);
+			consumerService.deleteConsumerForUser(consumerId, userId);
+			Map<String, String> success = new HashMap<>();
+			success.put("success", "Successfully deleted consumer with ID " + consumerId);
+			return ResponseEntity.ok().body(success);
+		} else {
+			throw new UnauthorizedAccessException("Unauthorized try to delete a consumer for user");
+		}
 	}
 
 	// CRUD-Endpoints für administrative Aufgaben
-	@GetMapping("/admin")
+	@GetMapping("/admin/")
 	public ResponseEntity<List<Consumer>> getAllConsumers() {
 		return ResponseEntity.ok(consumerService.getAllConsumers());
 	}

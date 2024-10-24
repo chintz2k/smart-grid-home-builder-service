@@ -10,11 +10,11 @@ import java.util.List;
 public interface ConsumerService {
 
 	// CRUD-Operationen für SH-Nutzer (basierend auf Benutzer-ID)
-	Consumer createConsumerForUser(Consumer consumer, Long ownerId);
-	List<Consumer> getAllConsumersForUser(Long ownerId);
-	Consumer getConsumerByIdForUser(Long consumerId, Long ownerId);
-	Consumer updateConsumerForUser(Long consumerId, Long ownerId, Consumer consumerDetails);
-	void deleteConsumerForUser(Long consumerId, Long ownerId);
+	Consumer createConsumerForUser(Consumer consumer, Long userId);
+	List<Consumer> getAllConsumersFromUser(Long userId);
+	Consumer getConsumerByIdFromUser(Long consumerId, Long userId);
+	Consumer updateConsumerForUser(Long consumerId, Long userId, Consumer consumerDetails);
+	void deleteConsumerForUser(Long consumerId, Long userId);
 
 	// CRUD-Operationen für administrative Aufgaben (keine Einschränkung auf Benutzer-ID)
 	List<Consumer> getAllConsumers();

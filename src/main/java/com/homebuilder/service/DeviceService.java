@@ -9,7 +9,7 @@ import java.util.List;
  */
 public interface DeviceService {
 
-	List<Device> getAllDevicesForUser(Long ownerID);
+	List<Device> getAllDevicesFromUser(Long userId);
 
 	List<Device> getAllDevices();
 

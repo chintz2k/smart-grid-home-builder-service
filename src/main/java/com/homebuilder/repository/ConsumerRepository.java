@@ -11,6 +11,6 @@ import java.util.Optional;
  */
 public interface ConsumerRepository extends JpaRepository<Consumer, Long> {
 
-	Optional<List<Consumer>> findByOwnerId(Long ownerId);
+	Optional<List<Consumer>> findByUserId(Long userId);
 
 }

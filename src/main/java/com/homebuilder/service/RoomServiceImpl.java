@@ -1,9 +1,10 @@
 package com.homebuilder.service;
 
 import com.homebuilder.entity.Room;
-import com.homebuilder.exception.RoomNotFoundException;
+import com.homebuilder.exception.DeviceNotFoundException;
 import com.homebuilder.exception.UnauthorizedAccessException;
 import com.homebuilder.repository.RoomRepository;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -24,31 +25,29 @@ public class RoomServiceImpl implements RoomService {
 
 	// CRUD-Operationen für SH-Nutzer
 	@Override
-	public Room createRoom(Room room, Long ownerId) {
-		room.setOwnerId(ownerId);
+	public Room createRoomForUser(@Valid Room room, Long userId) {
+		room.setUserId(userId);
 		return roomRepository.save(room);
 	}
 
 	@Override
-	public List<Room> getRoomsForUser(Long ownerId) {
-		return roomRepository.findByOwnerId(ownerId);
+	public List<Room> getAllRoomsFromUser(Long userId) {
+		return roomRepository.findByUserId(userId).orElseThrow(() -> new DeviceNotFoundException("No Rooms found for User with ID " + userId));
 	}
 
 	@Override
-	public Room getRoomForUser(Long roomId, Long ownerId) {
-		Room room = roomRepository.findById(roomId)
-				.orElseThrow(() -> new RoomNotFoundException("Room with ID " + roomId + " not found"));
-		if (!room.getOwnerId().equals(ownerId)) {
+	public Room getRoomByIdFromUser(Long roomId, Long userId) {
+		Room room = roomRepository.findById(roomId).orElseThrow(() -> new DeviceNotFoundException("Room with ID " + roomId + " not found"));
+		if (!room.getUserId().equals(userId)) {
 			throw new UnauthorizedAccessException("Unauthorized access to room with ID " + roomId);
 		}
 		return room;
 	}
 
 	@Override
-	public Room updateRoomForUser(Long roomId, Long ownerId, Room roomDetails) {
-		Room room = roomRepository.findById(roomId)
-				.orElseThrow(() -> new RoomNotFoundException("Room with ID " + roomId + " not found"));
-		if (!room.getOwnerId().equals(ownerId)) {
+	public Room updateRoomForUser(Long roomId, Long userId, @Valid Room roomDetails) {
+		Room room = roomRepository.findById(roomId).orElseThrow(() -> new DeviceNotFoundException("Room with ID " + roomId + " not found"));
+		if (!room.getUserId().equals(userId)) {
 			throw new UnauthorizedAccessException("Unauthorized access to room with ID " + roomId);
 		}
 		room.setName(roomDetails.getName());
@@ -56,10 +55,9 @@ public class RoomServiceImpl implements RoomService {
 	}
 
 	@Override
-	public void deleteRoomForUser(Long roomId, Long ownerId) {
-		Room room = roomRepository.findById(roomId)
-				.orElseThrow(() -> new RoomNotFoundException("Room with ID " + roomId + " not found"));
-		if (!room.getOwnerId().equals(ownerId)) {
+	public void deleteRoomForUser(Long roomId, Long userId) {
+		Room room = roomRepository.findById(roomId).orElseThrow(() -> new DeviceNotFoundException("Room with ID " + roomId + " not found"));
+		if (!room.getUserId().equals(userId)) {
 			throw new UnauthorizedAccessException("Unauthorized access to room with ID " + roomId);
 		}
 		roomRepository.delete(room);
@@ -73,7 +71,6 @@ public class RoomServiceImpl implements RoomService {
 
 	@Override
 	public Room getRoomById(Long roomId) {
-		return roomRepository.findById(roomId)
-				.orElseThrow(() -> new RoomNotFoundException("Room with ID " + roomId + " not found"));
+		return roomRepository.findById(roomId).orElseThrow(() -> new DeviceNotFoundException("Room with ID " + roomId + " not found"));
 	}
 }

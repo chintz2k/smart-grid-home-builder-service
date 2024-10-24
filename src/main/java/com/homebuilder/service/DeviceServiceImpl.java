@@ -26,12 +26,12 @@ public class DeviceServiceImpl implements DeviceService {
 
 	// SH-Nutzer
 	@Override
-	public List<Device> getAllDevicesForUser(Long ownerID) {
+	public List<Device> getAllDevicesFromUser(Long userId) {
 		List<Device> devices = new ArrayList<>();
 
-		devices.addAll(consumerService.getAllConsumersForUser(ownerID));
-		devices.addAll(producerService.getProducersForUser(ownerID));
-		devices.addAll(storageService.getStoragesForUser(ownerID));
+		devices.addAll(consumerService.getAllConsumersFromUser(userId));
+		devices.addAll(producerService.getAllProducersFromUser(userId));
+		devices.addAll(storageService.getAllStoragesFromUser(userId));
 
 		return devices;
 	}

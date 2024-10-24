@@ -1,6 +1,7 @@
 package com.homebuilder.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 
 /**
  * @author André Heinen
@@ -13,16 +14,18 @@ public abstract class Device {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
+	@NotBlank(message = "name is required")
 	private String name;
-	private Long ownerId;
+
+	private Long userId;
 
 	public Device() {
 
 	}
 
-	public Device(String name, Long ownerId) {
+	public Device(String name, Long userId) {
 		this.name = name;
-		this.ownerId = ownerId;
+		this.userId = userId;
 	}
 
 	public Long getId() {
@@ -41,11 +44,11 @@ public abstract class Device {
 		this.name = name;
 	}
 
-	public Long getOwnerId() {
-		return ownerId;
+	public Long getUserId() {
+		return userId;
 	}
 
-	public void setOwnerId(Long ownerId) {
-		this.ownerId = ownerId;
+	public void setUserId(Long userId) {
+		this.userId = userId;
 	}
 }

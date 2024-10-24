@@ -1,6 +1,8 @@
 package com.homebuilder.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
 
@@ -14,8 +16,11 @@ public class Room {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
+	@NotBlank(message = "name is required")
 	private String name;
-	private Long ownerId;
+
+	@NotNull(message = "user is required")
+	private Long userId;
 
 	@OneToMany
 	private List<Device> devices;
@@ -40,12 +45,12 @@ public class Room {
 		this.name = name;
 	}
 
-	public Long getOwnerId() {
-		return ownerId;
+	public Long getUserId() {
+		return userId;
 	}
 
-	public void setOwnerId(Long ownerId) {
-		this.ownerId = ownerId;
+	public void setUserId(Long userId) {
+		this.userId = userId;
 	}
 
 	public List<Device> getDevices() {

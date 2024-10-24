@@ -10,11 +10,11 @@ import java.util.List;
 public interface ProducerService {
 
 	// CRUD-Operationen für SH-Nutzer (basierend auf Benutzer-ID)
-	Producer createProducer(Producer producer, Long ownerId);
-	List<Producer> getProducersForUser(Long ownerId);
-	Producer getProducerForUser(Long producerId, Long ownerId);
-	Producer updateProducerForUser(Long producerId, Long ownerId, Producer producerDetails);
-	void deleteProducerForUser(Long producerId, Long ownerId);
+	Producer createProducerForUser(Producer producer, Long userId);
+	List<Producer> getAllProducersFromUser(Long userId);
+	Producer getProducerByIdFromUser(Long producerId, Long userId);
+	Producer updateProducerForUser(Long producerId, Long userId, Producer producerDetails);
+	void deleteProducerForUser(Long producerId, Long userId);
 
 	// CRUD-Operationen für administrative Aufgaben (keine Einschränkung auf Benutzer-ID)
 	List<Producer> getAllProducers();
