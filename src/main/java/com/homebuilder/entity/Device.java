@@ -19,13 +19,12 @@ public abstract class Device {
 
 	private Long userId;
 
+	private boolean active;
+
+	private boolean archived;
+
 	public Device() {
 
-	}
-
-	public Device(String name, Long userId) {
-		this.name = name;
-		this.userId = userId;
 	}
 
 	public Long getId() {
@@ -50,5 +49,21 @@ public abstract class Device {
 
 	public void setUserId(Long userId) {
 		this.userId = userId;
+	}
+
+	public boolean isActive() {
+		return active;
+	}
+
+	public void setActive(boolean active) {
+		this.active = active;
+	}
+
+	public boolean isArchived() {
+		return archived;
+	}
+
+	public void setArchived(boolean archived) {
+		this.archived = archived;
 	}
 }

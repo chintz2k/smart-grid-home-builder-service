@@ -102,7 +102,7 @@ public class ConsumerController {
 	}
 
 	// CRUD-Endpoints für administrative Aufgaben
-	@GetMapping("/admin/")
+	@GetMapping("/admin")
 	public ResponseEntity<List<Consumer>> getAllConsumers() {
 		return ResponseEntity.ok(consumerService.getAllConsumers());
 	}

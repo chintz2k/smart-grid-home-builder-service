@@ -102,7 +102,7 @@ public class StorageController {
 	}
 
 	// CRUD-Endpoints für administrative Aufgaben
-	@GetMapping("/admin/")
+	@GetMapping("/admin")
 	public ResponseEntity<List<Storage>> getAllStorages() {
 		return ResponseEntity.ok(storageService.getAllStorages());
 	}

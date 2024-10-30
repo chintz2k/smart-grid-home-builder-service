@@ -15,6 +15,8 @@ public interface RoomService {
 	Room getRoomByIdFromUser(Long roomId, Long userId);
 	Room updateRoomForUser(Long roomId, Long userId, Room roomDetails);
 	void deleteRoomForUser(Long roomId, Long userId);
+	void assignDeviceToRoomForUser(Long roomId, Long userId, Long deviceId);
+	void removeDeviceFromRoomForUser(Long roomId, Long deviceId, Long userId);
 
 	// CRUD-Operationen für administrative Aufgaben (keine Einschränkung auf Benutzer-ID)
 	List<Room> getAllRooms();

@@ -102,7 +102,7 @@ public class ProducerController {
 	}
 
 	// CRUD-Endpoints für administrative Aufgaben
-	@GetMapping("/admin/")
+	@GetMapping("/admin")
 	public ResponseEntity<List<Producer>> getAllProducers() {
 		return ResponseEntity.ok(producerService.getAllProducers());
 	}

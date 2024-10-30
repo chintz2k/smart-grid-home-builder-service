@@ -101,8 +101,46 @@ public class RoomController {
 		}
 	}
 
+	@PutMapping("/{roomId}/add-device")
+	public ResponseEntity<Map<String, String>> addDeviceToRoom(
+			@PathVariable Long roomId,
+			@RequestParam Long deviceId,
+			Principal principal) {
+
+		if (principal != null) {
+			String token = ((UsernamePasswordAuthenticationToken) principal).getCredentials().toString();
+			Long userId = jwtUtil.extractUserId(token);
+
+			roomService.assignDeviceToRoomForUser(roomId, deviceId, userId);
+			Map<String, String> success = new HashMap<>();
+			success.put("success", "Device added to room successfully");
+			return ResponseEntity.ok().body(success);
+		} else {
+			throw new UnauthorizedAccessException("Unauthorized access to add device to room");
+		}
+	}
+
+	@PutMapping("/{roomId}/remove-device")
+	public ResponseEntity<Map<String, String>> removeDeviceFromRoom(
+			@PathVariable Long roomId,
+			@RequestParam Long deviceId,
+			Principal principal) {
+
+		if (principal != null) {
+			String token = ((UsernamePasswordAuthenticationToken) principal).getCredentials().toString();
+			Long userId = jwtUtil.extractUserId(token);
+
+			roomService.removeDeviceFromRoomForUser(roomId, deviceId, userId);
+			Map<String, String> success = new HashMap<>();
+			success.put("success", "Device removed from room successfully");
+			return ResponseEntity.ok().body(success);
+		} else {
+			throw new UnauthorizedAccessException("Unauthorized access to remove device from room");
+		}
+	}
+
 	// CRUD-Endpoints für administrative Aufgaben
-	@GetMapping("/admin/")
+	@GetMapping("/admin")
 	public ResponseEntity<List<Room>> getAllRooms() {
 		return ResponseEntity.ok(roomService.getAllRooms());
 	}

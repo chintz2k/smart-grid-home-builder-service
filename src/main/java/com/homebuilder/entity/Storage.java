@@ -1,7 +1,8 @@
 package com.homebuilder.entity;
 
 import jakarta.persistence.Entity;
-import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 
@@ -11,13 +12,21 @@ import jakarta.validation.constraints.PositiveOrZero;
 @Entity
 public class Storage extends Device {
 
-	@NotNull(message = "capacity is required")
-	@Min(value = 1, message = "Capacity must greater than 1")
+	@NotNull(message = "Capacity is required")
+	@DecimalMin(value = "1.0", inclusive = true, message = "Capacity must be at least 1")
 	private double capacity;
 
 	@NotNull(message = "Current charge is required")
-	@PositiveOrZero(message = "Current charge must be greater than or equal to 0")
+	@PositiveOrZero(message = "Current charge must be non-negative")
 	private double currentCharge = 0.0;
+
+	@NotNull(message = "Charging priority is required")
+	@Max(value = 10, message = "Charging priority must be between 0 and 10")
+	private int chargingPriority = 0;
+
+	@NotNull(message = "Consuming priority is required")
+	@Max(value = 10, message = "Consuming priority must be between 0 and 10")
+	private int consumingPriority = 0;
 
 	public Storage() {
 
@@ -37,5 +46,21 @@ public class Storage extends Device {
 
 	public void setCurrentCharge(double currentCharge) {
 		this.currentCharge = currentCharge;
+	}
+
+	public int getChargingPriority() {
+		return chargingPriority;
+	}
+
+	public void setChargingPriority(int chargingPriority) {
+		this.chargingPriority = chargingPriority;
+	}
+
+	public int getConsumingPriority() {
+		return consumingPriority;
+	}
+
+	public void setConsumingPriority(int consumingPriority) {
+		this.consumingPriority = consumingPriority;
 	}
 }

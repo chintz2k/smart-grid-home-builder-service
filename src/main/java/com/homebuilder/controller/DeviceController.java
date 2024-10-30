@@ -40,7 +40,7 @@ public class DeviceController {
 			try {
 				String token = ((UsernamePasswordAuthenticationToken) principal).getCredentials().toString();
 				Long userId = jwtUtil.extractUserId(token);
-				return ResponseEntity.ok(deviceService.getAllDevicesFromUser(userId));
+				return ResponseEntity.ok(deviceService.getAllDevicesByUser(userId));
 			} catch (SignatureException ex) {
 				throw new InvalidJwtException("Invalid JWT token signature");
 			} catch (Exception ex) {
@@ -52,7 +52,7 @@ public class DeviceController {
 	}
 
 	// CRUD-Endpoints für administrative Aufgaben
-	@GetMapping("/admin/")
+	@GetMapping("/admin")
 	public ResponseEntity<List<Device>> getAllDevices() {
 		return ResponseEntity.ok(deviceService.getAllDevices());
 	}
