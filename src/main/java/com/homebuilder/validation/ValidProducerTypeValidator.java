@@ -8,7 +8,7 @@ import jakarta.validation.ConstraintValidatorContext;
 /**
  * @author André Heinen
  */
-public class ProducerTypeValidator implements ConstraintValidator<ValidProducerType, Object> {
+public class ValidProducerTypeValidator implements ConstraintValidator<ValidProducerType, Object> {
 
 	@Override
 	public void initialize(ValidProducerType constraintAnnotation) {}

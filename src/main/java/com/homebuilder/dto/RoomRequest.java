@@ -1,11 +1,13 @@
 package com.homebuilder.dto;
 
 import com.homebuilder.entity.Room;
+import com.homebuilder.validation.UniqueRoomName;
 import jakarta.validation.constraints.NotBlank;
 
 /**
  * @author André Heinen
  */
+@UniqueRoomName
 public class RoomRequest {
 
 	private Long id;

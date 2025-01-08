@@ -9,7 +9,7 @@ import java.lang.annotation.*;
  * @author André Heinen
  */
 @Documented
-@Constraint(validatedBy = ProducerTypeValidator.class)
+@Constraint(validatedBy = ValidProducerTypeValidator.class)
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ValidProducerType {

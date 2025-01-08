@@ -1,5 +1,6 @@
 package com.homebuilder.exception;
 
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -8,8 +9,11 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author André Heinen
@@ -56,12 +60,22 @@ public class GlobalExceptionHandler {
 	public ResponseEntity<Map<String, Object>> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
 		Map<String, Object> errorMap = new HashMap<>();
 		errorMap.put("error", "Validation failed");
-		errorMap.put("details", ex.getBindingResult().getFieldErrors().stream().map(error -> {
+		List<Map<String, String>> fieldErrors = ex.getBindingResult().getFieldErrors().stream().map(error -> {
 			Map<String, String> fieldError = new HashMap<>();
 			fieldError.put("field", error.getField());
 			fieldError.put("message", error.getDefaultMessage());
 			return fieldError;
-		}));
+		}).toList();
+		List<Map<String, String>> objectErrors = ex.getBindingResult().getGlobalErrors().stream().map(error -> {
+			Map<String, String> globalError = new HashMap<>();
+			globalError.put("object", error.getObjectName());
+			globalError.put("message", error.getDefaultMessage());
+			return globalError;
+		}).toList();
+		List<Map<String, String>> allErrors = new ArrayList<>();
+		allErrors.addAll(fieldErrors);
+		allErrors.addAll(objectErrors);
+		errorMap.put("details", allErrors);
 		return ResponseEntity.badRequest().body(errorMap);
 	}
 
@@ -84,6 +98,14 @@ public class GlobalExceptionHandler {
 			return timeslotInfo;
 		}));
 		return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+	}
+
+	@ExceptionHandler(ConstraintViolationException.class)
+	public ResponseEntity<String> handleConstraintViolationException(ConstraintViolationException ex) {
+		String errorMessage = ex.getConstraintViolations().stream()
+				.map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
+				.collect(Collectors.joining(", "));
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage);
 	}
 
 	@ExceptionHandler(NoHandlerFoundException.class)

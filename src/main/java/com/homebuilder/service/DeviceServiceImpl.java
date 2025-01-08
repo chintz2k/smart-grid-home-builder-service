@@ -33,11 +33,15 @@ public class DeviceServiceImpl implements DeviceService {
 	@Override
 	public List<Device> getAllDevicesFromUser() {
 		List<Device> devices = new ArrayList<>();
-
-		devices.addAll(consumerService.getAllConsumersFromUser());
-		devices.addAll(producerService.getAllProducersFromUser());
-		devices.addAll(storageService.getAllStoragesFromUser());
-
+		try {
+			devices.addAll(consumerService.getAllConsumersFromUser());
+		} catch (Exception ignored) {}
+		try {
+			devices.addAll(producerService.getAllProducersFromUser());
+		} catch (Exception ignored) {}
+		try {
+			devices.addAll(storageService.getAllStoragesFromUser());
+		} catch (Exception ignored) {}
 		return devices;
 	}
 
