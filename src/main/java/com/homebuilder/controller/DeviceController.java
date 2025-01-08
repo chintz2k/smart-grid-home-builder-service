@@ -1,19 +1,15 @@
 package com.homebuilder.controller;
 
+import com.homebuilder.dto.DeviceResponse;
 import com.homebuilder.entity.Device;
-import com.homebuilder.exception.InvalidJwtException;
-import com.homebuilder.exception.UnauthorizedAccessException;
-import com.homebuilder.security.JwtUtil;
 import com.homebuilder.service.DeviceService;
-import io.jsonwebtoken.security.SignatureException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.security.Principal;
 import java.util.List;
 
 /**
@@ -25,35 +21,32 @@ public class DeviceController {
 
 	private final DeviceService deviceService;
 
-	private final JwtUtil jwtUtil;
-
 	@Autowired
-	public DeviceController(DeviceService deviceService, JwtUtil jwtUtil) {
+	public DeviceController(DeviceService deviceService) {
 		this.deviceService = deviceService;
-		this.jwtUtil = jwtUtil;
 	}
 
-	// CRUD-Endpoints für SH-Nutzer
 	@GetMapping
-	public ResponseEntity<List<Device>> getAllDevicesFromUser(Principal principal) {
-		if (principal != null) {
-			try {
-				String token = ((UsernamePasswordAuthenticationToken) principal).getCredentials().toString();
-				Long userId = jwtUtil.extractUserId(token);
-				return ResponseEntity.ok(deviceService.getAllDevicesByUser(userId));
-			} catch (SignatureException ex) {
-				throw new InvalidJwtException("Invalid JWT token signature");
-			} catch (Exception ex) {
-				throw new UnauthorizedAccessException("Unauthorized access to consumers for user");
-			}
-		} else {
-			throw new UnauthorizedAccessException("Unauthorized access to consumers for user");
-		}
+	public ResponseEntity<List<DeviceResponse>> getAllDevicesFromUser() {
+		List<Device> deviceList = deviceService.getAllDevicesFromUser();
+		List<DeviceResponse> dtoList = deviceList.stream().map(DeviceResponse::new).toList();
+		return ResponseEntity.ok(dtoList);
 	}
 
-	// CRUD-Endpoints für administrative Aufgaben
+	@GetMapping("/{deviceId}")
+	public ResponseEntity<DeviceResponse> getDeviceByIdFromUser(@PathVariable Long deviceId) {
+		Device device = deviceService.getDeviceByIdFromUser(deviceId);
+		DeviceResponse dto = new DeviceResponse(device);
+		return ResponseEntity.ok(dto);
+	}
+
 	@GetMapping("/admin")
 	public ResponseEntity<List<Device>> getAllDevices() {
 		return ResponseEntity.ok(deviceService.getAllDevices());
+	}
+
+	@GetMapping("/admin/{deviceId}")
+	public ResponseEntity<Device> getDeviceById(@PathVariable Long deviceId) {
+		return ResponseEntity.ok(deviceService.getDeviceById(deviceId));
 	}
 }

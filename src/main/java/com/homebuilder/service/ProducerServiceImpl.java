@@ -1,14 +1,17 @@
 package com.homebuilder.service;
 
+import com.homebuilder.dto.ProducerRequest;
 import com.homebuilder.entity.Producer;
 import com.homebuilder.exception.DeviceNotFoundException;
 import com.homebuilder.exception.UnauthorizedAccessException;
 import com.homebuilder.repository.ProducerRepository;
+import com.homebuilder.security.SecurityService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author André Heinen
@@ -18,25 +21,36 @@ public class ProducerServiceImpl implements ProducerService {
 
 	private final ProducerRepository producerRepository;
 
+	private final SecurityService securityService;
+
 	@Autowired
-	public ProducerServiceImpl(ProducerRepository producerRepository) {
+	public ProducerServiceImpl(ProducerRepository producerRepository, SecurityService securityService) {
 		this.producerRepository = producerRepository;
+		this.securityService = securityService;
 	}
 
-	// CRUD-Operationen für SH-Nutzer
 	@Override
-	public Producer createProducerForUser(@Valid Producer producer, Long userId) {
+	public Producer createProducerForUser(@Valid ProducerRequest request) {
+		Long userId = securityService.getCurrentUserId();
+		Producer producer = request.toEntity();
 		producer.setUserId(userId);
-		return producerRepository.save(producer);
+		producerRepository.save(producer);
+		return producer;
 	}
 
 	@Override
-	public List<Producer> getAllProducersFromUser(Long userId) {
-		return producerRepository.findByUserId(userId).orElseThrow(() -> new DeviceNotFoundException("No Producers found for User with ID " + userId));
+	public List<Producer> getAllProducersFromUser() {
+		Long userId = securityService.getCurrentUserId();
+		List<Producer> producerList = producerRepository.findByUserId(userId);
+		if (producerList.isEmpty()) {
+			throw new DeviceNotFoundException("No Producers found for User with ID " + userId);
+		}
+		return producerList;
 	}
 
 	@Override
-	public Producer getProducerByIdFromUser(Long producerId, Long userId) {
+	public Producer getProducerByIdFromUser(Long producerId) {
+		Long userId = securityService.getCurrentUserId();
 		Producer producer = producerRepository.findById(producerId).orElseThrow(() -> new DeviceNotFoundException("Producer with ID " + producerId + " not found"));
 		if (!producer.getUserId().equals(userId)) {
 			throw new UnauthorizedAccessException("Unauthorized access to producer with ID " + producerId);
@@ -45,26 +59,35 @@ public class ProducerServiceImpl implements ProducerService {
 	}
 
 	@Override
-	public Producer updateProducerForUser(Long producerId, Long userId, @Valid Producer producerDetails) {
-		Producer producer = producerRepository.findById(producerId).orElseThrow(() -> new DeviceNotFoundException("Producer with ID " + producerId + " not found"));
-		if (!producer.getUserId().equals(userId)) {
-			throw new UnauthorizedAccessException("Unauthorized access to producer with ID " + producerId);
+	public Producer updateProducerForUser(Long existingProducerId, @Valid ProducerRequest request) {
+		Long userId = securityService.getCurrentUserId();
+		Producer existingProducer = getProducerByIdFromUser(existingProducerId);
+		if (!existingProducer.getUserId().equals(userId)) {
+			throw new UnauthorizedAccessException("Unauthorized access to producer with ID " + existingProducerId);
 		}
-		producer.setName(producerDetails.getName());
-		producer.setPowerProduction(producerDetails.getPowerProduction());
-		return producerRepository.save(producer);
+		existingProducer.setName(request.getName());
+		existingProducer.setActive(request.isActive());
+		existingProducer.setArchived(request.isArchived());
+		existingProducer.setPowerProduction(request.getPowerProduction());
+		producerRepository.save(existingProducer);
+		return existingProducer;
 	}
 
 	@Override
-	public void deleteProducerForUser(Long producerId, Long userId) {
-		Producer producer = producerRepository.findById(producerId).orElseThrow(() -> new DeviceNotFoundException("Producer with ID " + producerId + " not found"));
+	public Map<String, String> deleteProducerForUser(Long producerId) {
+		Long userId = securityService.getCurrentUserId();
+		Producer producer = getProducerByIdFromUser(producerId);
 		if (!producer.getUserId().equals(userId)) {
 			throw new UnauthorizedAccessException("Unauthorized access to producer with ID " + producerId);
 		}
+		Map<String, String> response = Map.of(
+				"message", "Successfully deleted Producer with ID " + producerId,
+				"id", producerId.toString()
+		);
 		producerRepository.delete(producer);
+		return response;
 	}
 
-	// CRUD-Operationen für administrative Aufgaben
 	@Override
 	public List<Producer> getAllProducers() {
 		return producerRepository.findAll();

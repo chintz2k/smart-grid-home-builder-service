@@ -1,20 +1,16 @@
 package com.homebuilder.controller;
 
+import com.homebuilder.dto.ProducerRequest;
+import com.homebuilder.dto.ProducerResponse;
 import com.homebuilder.entity.Producer;
-import com.homebuilder.exception.InvalidJwtException;
-import com.homebuilder.exception.UnauthorizedAccessException;
-import com.homebuilder.security.JwtUtil;
 import com.homebuilder.service.ProducerService;
-import io.jsonwebtoken.security.SignatureException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -27,88 +23,56 @@ public class ProducerController {
 
 	private final ProducerService producerService;
 
-	private final JwtUtil jwtUtil;
-
 	@Autowired
-	public ProducerController(ProducerService producerService, JwtUtil jwtUtil) {
+	public ProducerController(ProducerService producerService) {
 		this.producerService = producerService;
-		this.jwtUtil = jwtUtil;
 	}
 
-	// CRUD-Endpoints für SH-Nutzer
 	@PostMapping
-	public ResponseEntity<Producer> createProducerForUser(@Valid @RequestBody Producer producer, Principal principal) {
-		if (principal != null) {
-			String token = ((UsernamePasswordAuthenticationToken) principal).getCredentials().toString();
-			Long userId = jwtUtil.extractUserId(token);
-			return ResponseEntity.status(HttpStatus.CREATED).body(producerService.createProducerForUser(producer, userId));
-		} else {
-			throw new UnauthorizedAccessException("Unauthorized try to create producer for user");
-		}
+	public ResponseEntity<ProducerResponse> createProducerForUser(@Valid @RequestBody ProducerRequest request) {
+		Producer producer = producerService.createProducerForUser(request);
+		ProducerResponse dto = new ProducerResponse(producer);
+		return ResponseEntity.status(HttpStatus.CREATED).body(dto);
 	}
 
 	@GetMapping
-	public ResponseEntity<?> getAllProducersFromUser(Principal principal) {
-		if (principal != null) {
-			try {
-				String token = ((UsernamePasswordAuthenticationToken) principal).getCredentials().toString();
-				Long userId = jwtUtil.extractUserId(token);
-				return ResponseEntity.ok(producerService.getAllProducersFromUser(userId));
-			} catch (SignatureException ex) {
-				throw new InvalidJwtException("Invalid JWT token signature");
-			} catch (Exception ex) {
-				throw new UnauthorizedAccessException("Unauthorized access to producers for user");
-			}
-		} else {
-			throw new UnauthorizedAccessException("Unauthorized access to producers for user");
-		}
+	public ResponseEntity<List<ProducerResponse>> getAllProducersFromUser() {
+		List<Producer> producerList = producerService.getAllProducersFromUser();
+		List<ProducerResponse> dtoList = producerList.stream().map(ProducerResponse::new).toList();
+		return ResponseEntity.ok(dtoList);
 	}
 
-
 	@GetMapping("/{producerId}")
-	public ResponseEntity<Producer> getProducerByIdFromUser(@PathVariable Long producerId, Principal principal) {
-		if (principal != null) {
-			String token = ((UsernamePasswordAuthenticationToken) principal).getCredentials().toString();
-			Long userId = jwtUtil.extractUserId(token);
-			return ResponseEntity.ok(producerService.getProducerByIdFromUser(producerId, userId));
-		} else {
-			throw new UnauthorizedAccessException("Unauthorized access to producer for user");
-		}
+	public ResponseEntity<ProducerResponse> getProducerByIdFromUser(@PathVariable Long producerId) {
+		Producer producer = producerService.getProducerByIdFromUser(producerId);
+		ProducerResponse dto = new ProducerResponse(producer);
+		return ResponseEntity.ok(dto);
 	}
 
 	@PutMapping("/{producerId}")
-	public ResponseEntity<Producer> updateProducerForUser(@PathVariable Long producerId, @Valid @RequestBody Producer producerDetails, Principal principal) {
-		if (principal != null) {
-			String token = ((UsernamePasswordAuthenticationToken) principal).getCredentials().toString();
-			Long userId = jwtUtil.extractUserId(token);
-			return ResponseEntity.ok(producerService.updateProducerForUser(producerId, userId, producerDetails));
-		} else {
-			throw new UnauthorizedAccessException("Unauthorized try to update a producer for user");
-		}
+	public ResponseEntity<ProducerResponse> updateProducerForUser(@PathVariable Long producerId, @Valid @RequestBody ProducerRequest request) {
+		Producer producer = producerService.updateProducerForUser(producerId, request);
+		ProducerResponse dto = new ProducerResponse(producer);
+		return ResponseEntity.ok(dto);
 	}
 
 	@DeleteMapping("/{producerId}")
-	public ResponseEntity<?> deleteProducerForUser(@PathVariable Long producerId, Principal principal) {
-		if (principal != null) {
-			String token = ((UsernamePasswordAuthenticationToken) principal).getCredentials().toString();
-			Long userId = jwtUtil.extractUserId(token);
-			producerService.deleteProducerForUser(producerId, userId);
-			Map<String, String> success = new HashMap<>();
-			success.put("success", "Successfully deleted producer with ID " + producerId);
-			return ResponseEntity.ok().body(success);
-		} else {
-			throw new UnauthorizedAccessException("Unauthorized try to delete a producer for user");
-		}
+	public ResponseEntity<Map<String, String>> deleteProducerForUser(@PathVariable Long producerId) {
+		Map<String, String> success = producerService.deleteProducerForUser(producerId);
+		return ResponseEntity.ok().body(success);
 	}
 
-	// CRUD-Endpoints für administrative Aufgaben
 	@GetMapping("/admin")
+	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<List<Producer>> getAllProducers() {
-		return ResponseEntity.ok(producerService.getAllProducers());
+		List<Producer> producerList = producerService.getAllProducers();
+		return ResponseEntity.ok(producerList);
 	}
 
 	@GetMapping("/admin/{producerId}")
+	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<Producer> getProducerById(@PathVariable Long producerId) {
-		return ResponseEntity.ok(producerService.getProducerById(producerId));
+		Producer producer = producerService.getProducerById(producerId);
+		return ResponseEntity.ok(producer);
 	}
 }

@@ -11,7 +11,7 @@ import jakarta.validation.constraints.NotNull;
 public class Consumer extends Device {
 
 	@NotNull(message = "Power consumption is required")
-	@DecimalMin(value = "0.001", inclusive = true, message = "Power consumption must be at least 0.001")
+	@DecimalMin(value = "0.001", message = "Power consumption must be at least 0.001")
 	private double powerConsumption;
 
 	public Consumer() {

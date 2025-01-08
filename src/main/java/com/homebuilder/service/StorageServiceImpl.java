@@ -1,14 +1,17 @@
 package com.homebuilder.service;
 
+import com.homebuilder.dto.StorageRequest;
 import com.homebuilder.entity.Storage;
 import com.homebuilder.exception.DeviceNotFoundException;
 import com.homebuilder.exception.UnauthorizedAccessException;
 import com.homebuilder.repository.StorageRepository;
+import com.homebuilder.security.SecurityService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author André Heinen
@@ -18,25 +21,36 @@ public class StorageServiceImpl implements StorageService {
 
 	private final StorageRepository storageRepository;
 
+	private final SecurityService securityService;
+
 	@Autowired
-	public StorageServiceImpl(StorageRepository storageRepository) {
+	public StorageServiceImpl(StorageRepository storageRepository, SecurityService securityService) {
 		this.storageRepository = storageRepository;
+		this.securityService = securityService;
 	}
 
-	// CRUD-Operationen für SH-Nutzer
 	@Override
-	public Storage createStorageForUser(@Valid Storage storage, Long userId) {
+	public Storage createStorageForUser(@Valid StorageRequest request) {
+		Long userId = securityService.getCurrentUserId();
+		Storage storage = request.toEntity();
 		storage.setUserId(userId);
-		return storageRepository.save(storage);
+		storageRepository.save(storage);
+		return storage;
 	}
 
 	@Override
-	public List<Storage> getAllStoragesFromUser(Long userId) {
-		return storageRepository.findByUserId(userId).orElseThrow(() -> new DeviceNotFoundException("No Storages found for User with ID " + userId));
+	public List<Storage> getAllStoragesFromUser() {
+		Long userId = securityService.getCurrentUserId();
+		List<Storage> storageList = storageRepository.findByUserId(userId);
+		if (storageList.isEmpty()) {
+			throw new DeviceNotFoundException("No Storages found for User with ID " + userId);
+		}
+		return storageList;
 	}
 
 	@Override
-	public Storage getStorageByIdFromUser(Long storageId, Long userId) {
+	public Storage getStorageByIdFromUser(Long storageId) {
+		Long userId = securityService.getCurrentUserId();
 		Storage storage = storageRepository.findById(storageId).orElseThrow(() -> new DeviceNotFoundException("Storage with ID " + storageId + " not found"));
 		if (!storage.getUserId().equals(userId)) {
 			throw new UnauthorizedAccessException("Unauthorized access to storage with ID " + storageId);
@@ -45,27 +59,38 @@ public class StorageServiceImpl implements StorageService {
 	}
 
 	@Override
-	public Storage updateStorageForUser(Long storageId, Long userId, @Valid Storage storageDetails) {
-		Storage storage = storageRepository.findById(storageId).orElseThrow(() -> new DeviceNotFoundException("Storage with ID " + storageId + " not found"));
-		if (!storage.getUserId().equals(userId)) {
-			throw new UnauthorizedAccessException("Unauthorized access to storage with ID " + storageId);
+	public Storage updateStorageForUser(Long existingStorageId, @Valid StorageRequest request) {
+		Long userId = securityService.getCurrentUserId();
+		Storage existingStorage = getStorageByIdFromUser(existingStorageId);
+		if (!existingStorage.getUserId().equals(userId)) {
+			throw new UnauthorizedAccessException("Unauthorized access to storage with ID " + existingStorageId);
 		}
-		storage.setName(storageDetails.getName());
-		storage.setCapacity(storageDetails.getCapacity());
-		storage.setCurrentCharge(storageDetails.getCurrentCharge());
-		return storageRepository.save(storage);
+		existingStorage.setName(request.getName());
+		existingStorage.setActive(request.isActive());
+		existingStorage.setArchived(request.isArchived());
+		existingStorage.setCapacity(request.getCapacity());
+		existingStorage.setCurrentCharge(request.getCurrentCharge());
+		existingStorage.setChargingPriority(request.getChargingPriority());
+		existingStorage.setConsumingPriority(request.getConsumingPriority());
+		storageRepository.save(existingStorage);
+		return existingStorage;
 	}
 
 	@Override
-	public void deleteStorageForUser(Long storageId, Long userId) {
-		Storage storage = storageRepository.findById(storageId).orElseThrow(() -> new DeviceNotFoundException("Storage with ID " + storageId + " not found"));
+	public Map<String, String> deleteStorageForUser(Long storageId) {
+		Long userId = securityService.getCurrentUserId();
+		Storage storage = getStorageByIdFromUser(storageId);
 		if (!storage.getUserId().equals(userId)) {
 			throw new UnauthorizedAccessException("Unauthorized access to storage with ID " + storageId);
 		}
+		Map<String, String> response = Map.of(
+				"message", "Successfully deleted SmartConsumer with ID " + storageId,
+				"id", storageId.toString()
+		);
 		storageRepository.delete(storage);
+		return response;
 	}
 
-	// CRUD-Operationen für administrative Aufgaben
 	@Override
 	public List<Storage> getAllStorages() {
 		return storageRepository.findAll();

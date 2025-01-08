@@ -53,10 +53,37 @@ public class GlobalExceptionHandler {
 	}
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)
-	public ResponseEntity<Map<String, String>> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex, WebRequest request) {
+	public ResponseEntity<Map<String, Object>> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
+		Map<String, Object> errorMap = new HashMap<>();
+		errorMap.put("error", "Validation failed");
+		errorMap.put("details", ex.getBindingResult().getFieldErrors().stream().map(error -> {
+			Map<String, String> fieldError = new HashMap<>();
+			fieldError.put("field", error.getField());
+			fieldError.put("message", error.getDefaultMessage());
+			return fieldError;
+		}));
+		return ResponseEntity.badRequest().body(errorMap);
+	}
+
+	@ExceptionHandler(SecurityException.class)
+	public ResponseEntity<Map<String, String>> handleSecurityException(SecurityException ex) {
 		Map<String, String> error = new HashMap<>();
 		error.put("error", ex.getMessage());
-		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+	}
+
+	@ExceptionHandler(TimeslotOverlapException.class)
+	public ResponseEntity<Map<String, Object>> handleTimeslotOverlapException(TimeslotOverlapException ex, WebRequest request) {
+		Map<String, Object> error = new HashMap<>();
+		error.put("error", ex.getMessage());
+		error.put("overlappingTimeslots", ex.getOverlappingTimeslots().stream().map(timeslot -> {
+			Map<String, Object> timeslotInfo = new HashMap<>();
+			timeslotInfo.put("id", timeslot.getId());
+			timeslotInfo.put("startTime", timeslot.getStartTime());
+			timeslotInfo.put("endTime", timeslot.getEndTime());
+			return timeslotInfo;
+		}));
+		return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
 	}
 
 	@ExceptionHandler(NoHandlerFoundException.class)

@@ -19,9 +19,9 @@ public abstract class Device {
 
 	private Long userId;
 
-	private boolean active;
+	private boolean active = false;
 
-	private boolean archived;
+	private boolean archived = false;
 
 	public Device() {
 

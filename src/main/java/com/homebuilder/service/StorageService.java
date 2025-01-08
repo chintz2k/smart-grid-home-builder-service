@@ -1,22 +1,22 @@
 package com.homebuilder.service;
 
+import com.homebuilder.dto.StorageRequest;
 import com.homebuilder.entity.Storage;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author André Heinen
  */
 public interface StorageService {
 
-	// CRUD-Operationen für SH-Nutzer (basierend auf Benutzer-ID)
-	Storage createStorageForUser(Storage storage, Long userId);
-	List<Storage> getAllStoragesFromUser(Long userId);
-	Storage getStorageByIdFromUser(Long storageId, Long userId);
-	Storage updateStorageForUser(Long storageId, Long userId, Storage storageDetails);
-	void deleteStorageForUser(Long storageId, Long userId);
+	Storage createStorageForUser(StorageRequest request);
+	List<Storage> getAllStoragesFromUser();
+	Storage getStorageByIdFromUser(Long storageId);
+	Storage updateStorageForUser(Long storageId, StorageRequest request);
+	Map<String, String> deleteStorageForUser(Long storageId);
 
-	// CRUD-Operationen für administrative Aufgaben (keine Einschränkung auf Benutzer-ID)
 	List<Storage> getAllStorages();
 	Storage getStorageById(Long storageId);
 }

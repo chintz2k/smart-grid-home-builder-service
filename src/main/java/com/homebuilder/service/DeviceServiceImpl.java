@@ -2,6 +2,7 @@ package com.homebuilder.service;
 
 import com.homebuilder.entity.Device;
 import com.homebuilder.exception.DeviceNotFoundException;
+import com.homebuilder.security.SecurityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -19,26 +20,29 @@ public class DeviceServiceImpl implements DeviceService {
 	private final ProducerService producerService;
 	private final StorageService storageService;
 
+	private final SecurityService securityService;
+
 	@Autowired
-	public DeviceServiceImpl(ConsumerService consumerService, ProducerService producerService, StorageService storageService) {
+	public DeviceServiceImpl(ConsumerService consumerService, ProducerService producerService, StorageService storageService, SecurityService securityService) {
 		this.consumerService = consumerService;
 		this.producerService = producerService;
 		this.storageService = storageService;
+		this.securityService = securityService;
 	}
 
-	// SH-Nutzer
 	@Override
-	public List<Device> getAllDevicesByUser(Long userId) {
+	public List<Device> getAllDevicesFromUser() {
 		List<Device> devices = new ArrayList<>();
 
-		devices.addAll(consumerService.getAllConsumersFromUser(userId));
-		devices.addAll(producerService.getAllProducersFromUser(userId));
-		devices.addAll(storageService.getAllStoragesFromUser(userId));
+		devices.addAll(consumerService.getAllConsumersFromUser());
+		devices.addAll(producerService.getAllProducersFromUser());
+		devices.addAll(storageService.getAllStoragesFromUser());
 
 		return devices;
 	}
 
-	public Device getDeviceByIdAndUser(Long deviceId, Long userId) {
+	public Device getDeviceByIdFromUser(Long deviceId) {
+		Long userId = securityService.getCurrentUserId();
 		Optional<Device> device = Optional.ofNullable(consumerService.getConsumerById(deviceId));
 		if (device.isEmpty()) {
 			device = Optional.ofNullable(producerService.getProducerById(deviceId));
@@ -46,11 +50,9 @@ public class DeviceServiceImpl implements DeviceService {
 		if (device.isEmpty()) {
 			device = Optional.ofNullable(storageService.getStorageById(deviceId));
 		}
-		return device.filter(d -> d.getUserId().equals(userId))
-				.orElseThrow(() -> new DeviceNotFoundException("Device with ID " + deviceId + " not found or not accessible by user with ID " + userId));
+		return device.filter(d -> d.getUserId().equals(userId)).orElseThrow(() -> new DeviceNotFoundException("Device with ID " + deviceId + " not found or not accessible by user with ID " + userId));
 	}
 
-	// Admin
 	@Override
 	public List<Device> getAllDevices() {
 		List<Device> devices = new ArrayList<>();
@@ -60,5 +62,17 @@ public class DeviceServiceImpl implements DeviceService {
 		devices.addAll(storageService.getAllStorages());
 
 		return devices;
+	}
+
+	@Override
+	public Device getDeviceById(Long deviceId) {
+		Optional<Device> device = Optional.ofNullable(consumerService.getConsumerById(deviceId));
+		if (device.isEmpty()) {
+			device = Optional.ofNullable(producerService.getProducerById(deviceId));
+		}
+		if (device.isEmpty()) {
+			device = Optional.ofNullable(storageService.getStorageById(deviceId));
+		}
+		return device.orElseThrow(() -> new DeviceNotFoundException("Device with ID " + deviceId + " not found"));
 	}
 }

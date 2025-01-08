@@ -1,20 +1,16 @@
 package com.homebuilder.controller;
 
+import com.homebuilder.dto.StorageRequest;
+import com.homebuilder.dto.StorageResponse;
 import com.homebuilder.entity.Storage;
-import com.homebuilder.exception.InvalidJwtException;
-import com.homebuilder.exception.UnauthorizedAccessException;
-import com.homebuilder.security.JwtUtil;
 import com.homebuilder.service.StorageService;
-import io.jsonwebtoken.security.SignatureException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -27,88 +23,56 @@ public class StorageController {
 
 	private final StorageService storageService;
 
-	private final JwtUtil jwtUtil;
-
 	@Autowired
-	public StorageController(StorageService storageService, JwtUtil jwtUtil) {
+	public StorageController(StorageService storageService) {
 		this.storageService = storageService;
-		this.jwtUtil = jwtUtil;
 	}
 
-	// CRUD-Endpoints für SH-Nutzer
 	@PostMapping
-	public ResponseEntity<Storage> createStorageForUser(@Valid @RequestBody Storage storage, Principal principal) {
-		if (principal != null) {
-			String token = ((UsernamePasswordAuthenticationToken) principal).getCredentials().toString();
-			Long userId = jwtUtil.extractUserId(token);
-			return ResponseEntity.status(HttpStatus.CREATED).body(storageService.createStorageForUser(storage, userId));
-		} else {
-			throw new UnauthorizedAccessException("Unauthorized try to create storage for user");
-		}
+	public ResponseEntity<StorageResponse> createStorageForUser(@Valid @RequestBody StorageRequest request) {
+		Storage storage = storageService.createStorageForUser(request);
+		StorageResponse dto = new StorageResponse(storage);
+		return ResponseEntity.status(HttpStatus.CREATED).body(dto);
 	}
 
 	@GetMapping
-	public ResponseEntity<?> getAllStoragesFromUser(Principal principal) {
-		if (principal != null) {
-			try {
-				String token = ((UsernamePasswordAuthenticationToken) principal).getCredentials().toString();
-				Long userId = jwtUtil.extractUserId(token);
-				return ResponseEntity.ok(storageService.getAllStoragesFromUser(userId));
-			} catch (SignatureException ex) {
-				throw new InvalidJwtException("Invalid JWT token signature");
-			} catch (Exception ex) {
-				throw new UnauthorizedAccessException("Unauthorized access to storages for user");
-			}
-		} else {
-			throw new UnauthorizedAccessException("Unauthorized access to storages for user");
-		}
+	public ResponseEntity<List<StorageResponse>> getAllStoragesFromUser() {
+		List<Storage> storageList = storageService.getAllStoragesFromUser();
+		List<StorageResponse> dtoList = storageList.stream().map(StorageResponse::new).toList();
+		return ResponseEntity.ok(dtoList);
 	}
 
-
 	@GetMapping("/{storageId}")
-	public ResponseEntity<Storage> getStorageByIdFromUser(@PathVariable Long storageId, Principal principal) {
-		if (principal != null) {
-			String token = ((UsernamePasswordAuthenticationToken) principal).getCredentials().toString();
-			Long userId = jwtUtil.extractUserId(token);
-			return ResponseEntity.ok(storageService.getStorageByIdFromUser(storageId, userId));
-		} else {
-			throw new UnauthorizedAccessException("Unauthorized access to storage for user");
-		}
+	public ResponseEntity<StorageResponse> getStorageByIdFromUser(@PathVariable Long storageId) {
+		Storage storage = storageService.getStorageByIdFromUser(storageId);
+		StorageResponse dto = new StorageResponse(storage);
+		return ResponseEntity.ok(dto);
 	}
 
 	@PutMapping("/{storageId}")
-	public ResponseEntity<Storage> updateStorageForUser(@PathVariable Long storageId, @Valid @RequestBody Storage storageDetails, Principal principal) {
-		if (principal != null) {
-			String token = ((UsernamePasswordAuthenticationToken) principal).getCredentials().toString();
-			Long userId = jwtUtil.extractUserId(token);
-			return ResponseEntity.ok(storageService.updateStorageForUser(storageId, userId, storageDetails));
-		} else {
-			throw new UnauthorizedAccessException("Unauthorized try to update a storage for user");
-		}
+	public ResponseEntity<StorageResponse> updateStorageForUser(@PathVariable Long storageId, @Valid @RequestBody StorageRequest request) {
+		Storage storage = storageService.updateStorageForUser(storageId, request);
+		StorageResponse dto = new StorageResponse(storage);
+		return ResponseEntity.ok(dto);
 	}
 
 	@DeleteMapping("/{storageId}")
-	public ResponseEntity<?> deleteStorageForUser(@PathVariable Long storageId, Principal principal) {
-		if (principal != null) {
-			String token = ((UsernamePasswordAuthenticationToken) principal).getCredentials().toString();
-			Long userId = jwtUtil.extractUserId(token);
-			storageService.deleteStorageForUser(storageId, userId);
-			Map<String, String> success = new HashMap<>();
-			success.put("success", "Successfully deleted storage with ID " + storageId);
-			return ResponseEntity.ok().body(success);
-		} else {
-			throw new UnauthorizedAccessException("Unauthorized try to delete a storage for user");
-		}
+	public ResponseEntity<Map<String, String>> deleteStorageForUser(@PathVariable Long storageId) {
+		Map<String, String> success = storageService.deleteStorageForUser(storageId);
+		return ResponseEntity.ok().body(success);
 	}
 
-	// CRUD-Endpoints für administrative Aufgaben
 	@GetMapping("/admin")
+	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<List<Storage>> getAllStorages() {
-		return ResponseEntity.ok(storageService.getAllStorages());
+		List<Storage> storageList = storageService.getAllStorages();
+		return ResponseEntity.ok(storageList);
 	}
 
 	@GetMapping("/admin/{storageId}")
+	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<Storage> getStorageById(@PathVariable Long storageId) {
-		return ResponseEntity.ok(storageService.getStorageById(storageId));
+		Storage storage = storageService.getStorageById(storageId);
+		return ResponseEntity.ok(storage);
 	}
 }

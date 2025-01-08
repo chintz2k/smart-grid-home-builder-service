@@ -1,14 +1,17 @@
 package com.homebuilder.service;
 
+import com.homebuilder.dto.ConsumerRequest;
 import com.homebuilder.entity.Consumer;
 import com.homebuilder.exception.DeviceNotFoundException;
 import com.homebuilder.exception.UnauthorizedAccessException;
 import com.homebuilder.repository.ConsumerRepository;
+import com.homebuilder.security.SecurityService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author André Heinen
@@ -18,25 +21,36 @@ public class ConsumerServiceImpl implements ConsumerService {
 
 	private final ConsumerRepository consumerRepository;
 
+	private final SecurityService securityService;
+
 	@Autowired
-	public ConsumerServiceImpl(ConsumerRepository consumerRepository) {
+	public ConsumerServiceImpl(ConsumerRepository consumerRepository, SecurityService securityService) {
 		this.consumerRepository = consumerRepository;
+		this.securityService = securityService;
 	}
 
-	// CRUD-Operationen für SH-Nutzer
 	@Override
-	public Consumer createConsumerForUser(@Valid Consumer consumer, Long userId) {
+	public Consumer createConsumerForUser(@Valid ConsumerRequest request) {
+		Long userId = securityService.getCurrentUserId();
+		Consumer consumer = request.toEntity();
 		consumer.setUserId(userId);
-		return consumerRepository.save(consumer);
+		consumerRepository.save(consumer);
+		return consumer;
 	}
 
 	@Override
-	public List<Consumer> getAllConsumersFromUser(Long userId) {
-		return consumerRepository.findByUserId(userId).orElseThrow(() -> new DeviceNotFoundException("No Consumers found for User with ID " + userId));
+	public List<Consumer> getAllConsumersFromUser() {
+		Long userId = securityService.getCurrentUserId();
+		List<Consumer> consumerList = consumerRepository.findByUserId(userId);
+		if (consumerList.isEmpty()) {
+			throw new DeviceNotFoundException("No Consumers found for User with ID " + userId);
+		}
+		return consumerList;
 	}
 
 	@Override
-	public Consumer getConsumerByIdFromUser(Long consumerId, Long userId) {
+	public Consumer getConsumerByIdFromUser(Long consumerId) {
+		Long userId = securityService.getCurrentUserId();
 		Consumer consumer = consumerRepository.findById(consumerId).orElseThrow(() -> new DeviceNotFoundException("Consumer with ID " + consumerId + " not found"));
 		if (!consumer.getUserId().equals(userId)) {
 			throw new UnauthorizedAccessException("Unauthorized access to consumer with ID " + consumerId);
@@ -45,26 +59,35 @@ public class ConsumerServiceImpl implements ConsumerService {
 	}
 
 	@Override
-	public Consumer updateConsumerForUser(Long consumerId, Long userId, @Valid Consumer consumerDetails) {
-		Consumer consumer = consumerRepository.findById(consumerId).orElseThrow(() -> new DeviceNotFoundException("Consumer with ID " + consumerId + " not found"));
-		if (!consumer.getUserId().equals(userId)) {
-			throw new UnauthorizedAccessException("Unauthorized access to consumer with ID " + consumerId);
+	public Consumer updateConsumerForUser(Long existingConsumerId, @Valid ConsumerRequest request) {
+		Long userId = securityService.getCurrentUserId();
+		Consumer existingConsumer = getConsumerByIdFromUser(existingConsumerId);
+		if (!existingConsumer.getUserId().equals(userId)) {
+			throw new UnauthorizedAccessException("Unauthorized access to consumer with ID " + existingConsumerId);
 		}
-		consumer.setName(consumerDetails.getName());
-		consumer.setPowerConsumption(consumerDetails.getPowerConsumption());
-		return consumerRepository.save(consumer);
+		existingConsumer.setName(request.getName());
+		existingConsumer.setActive(request.isActive());
+		existingConsumer.setArchived(request.isArchived());
+		existingConsumer.setPowerConsumption(request.getPowerConsumption());
+		consumerRepository.save(existingConsumer);
+		return existingConsumer;
 	}
 
 	@Override
-	public void deleteConsumerForUser(Long consumerId, Long userId) {
-		Consumer consumer = consumerRepository.findById(consumerId).orElseThrow(() -> new DeviceNotFoundException("Consumer with ID " + consumerId + " not found"));
+	public Map<String, String> deleteConsumerForUser(Long consumerId) {
+		Long userId = securityService.getCurrentUserId();
+		Consumer consumer = getConsumerByIdFromUser(consumerId);
 		if (!consumer.getUserId().equals(userId)) {
 			throw new UnauthorizedAccessException("Unauthorized access to consumer with ID " + consumerId);
 		}
+		Map<String, String> response = Map.of(
+				"message", "Successfully deleted Consumer with ID " + consumerId,
+				"id", consumerId.toString()
+		);
 		consumerRepository.delete(consumer);
+		return response;
 	}
 
-	// CRUD-Operationen für administrative Aufgaben
 	@Override
 	public List<Consumer> getAllConsumers() {
 		return consumerRepository.findAll();
