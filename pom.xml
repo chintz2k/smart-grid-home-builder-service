@@ -117,6 +117,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
         </plugins>
+        <finalName>home-builder-service</finalName>
     </build>
 
 </project>
