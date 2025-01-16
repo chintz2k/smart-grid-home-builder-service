@@ -19,4 +19,6 @@ public interface StorageService {
 
 	List<Storage> getAllStorages();
 	Storage getStorageById(Long storageId);
+	Storage updateStorage(Long storageId, Storage request);
+
 }

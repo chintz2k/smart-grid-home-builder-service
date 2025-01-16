@@ -69,7 +69,6 @@ public class StorageServiceImpl implements StorageService {
 		existingStorage.setActive(request.isActive());
 		existingStorage.setArchived(request.isArchived());
 		existingStorage.setCapacity(request.getCapacity());
-		existingStorage.setCurrentCharge(request.getCurrentCharge());
 		existingStorage.setChargingPriority(request.getChargingPriority());
 		existingStorage.setConsumingPriority(request.getConsumingPriority());
 		storageRepository.save(existingStorage);
@@ -99,5 +98,19 @@ public class StorageServiceImpl implements StorageService {
 	@Override
 	public Storage getStorageById(Long storageId) {
 		return storageRepository.findById(storageId).orElseThrow(() -> new DeviceNotFoundException("Storage with ID " + storageId + " not found"));
+	}
+
+	@Override
+	public Storage updateStorage(Long storageId, @Valid Storage request) {
+		Storage storage = getStorageById(storageId);
+		storage.setName(request.getName());
+		storage.setActive(request.isActive());
+		storage.setArchived(request.isArchived());
+		storage.setCapacity(request.getCapacity());
+		storage.setCurrentCharge(request.getCurrentCharge());
+		storage.setChargingPriority(request.getChargingPriority());
+		storage.setConsumingPriority(request.getConsumingPriority());
+		storageRepository.save(storage);
+		return storage;
 	}
 }

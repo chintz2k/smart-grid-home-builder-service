@@ -19,4 +19,6 @@ public interface ProducerService {
 
 	List<Producer> getAllProducers();
 	Producer getProducerById(Long producerId);
+	Producer updateProducer(Long producerId, Producer request);
+
 }

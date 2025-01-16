@@ -97,4 +97,15 @@ public class ProducerServiceImpl implements ProducerService {
 	public Producer getProducerById(Long producerId) {
 		return producerRepository.findById(producerId).orElseThrow(() -> new DeviceNotFoundException("Producer with ID " + producerId + " not found"));
 	}
+
+	@Override
+	public Producer updateProducer(Long producerId, @Valid Producer request) {
+		Producer producer = getProducerById(producerId);
+		producer.setName(request.getName());
+		producer.setActive(request.isActive());
+		producer.setArchived(request.isArchived());
+		producer.setPowerProduction(request.getPowerProduction());
+		producerRepository.save(producer);
+		return producer;
+	}
 }

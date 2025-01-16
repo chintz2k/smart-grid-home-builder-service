@@ -97,4 +97,15 @@ public class ConsumerServiceImpl implements ConsumerService {
 	public Consumer getConsumerById(Long consumerId) {
 		return consumerRepository.findById(consumerId).orElseThrow(() -> new DeviceNotFoundException("Consumer with ID " + consumerId + " not found"));
 	}
+
+	@Override
+	public Consumer updateConsumer(Long consumerId, @Valid Consumer request) {
+		Consumer consumer = getConsumerById(consumerId);
+		consumer.setName(request.getName());
+		consumer.setActive(request.isActive());
+		consumer.setArchived(request.isArchived());
+		consumer.setPowerConsumption(request.getPowerConsumption());
+		consumerRepository.save(consumer);
+		return consumer;
+	}
 }

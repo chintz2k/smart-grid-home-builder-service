@@ -19,4 +19,5 @@ public interface SmartConsumerService {
 
 	List<SmartConsumer> getAllSmartConsumers();
 	SmartConsumer getSmartConsumerById(Long smartConsumerId);
+
 }

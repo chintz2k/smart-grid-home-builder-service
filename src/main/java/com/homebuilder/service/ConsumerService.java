@@ -19,4 +19,6 @@ public interface ConsumerService {
 
 	List<Consumer> getAllConsumers();
 	Consumer getConsumerById(Long consumerId);
+	Consumer updateConsumer(Long consumerId, Consumer request);
+
 }

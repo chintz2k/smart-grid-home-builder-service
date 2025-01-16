@@ -1,13 +1,20 @@
 package com.homebuilder.service;
 
+import com.homebuilder.entity.Consumer;
 import com.homebuilder.entity.Device;
+import com.homebuilder.entity.Producer;
+import com.homebuilder.entity.Storage;
 import com.homebuilder.exception.DeviceNotFoundException;
 import com.homebuilder.security.SecurityService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -22,12 +29,15 @@ public class DeviceServiceImpl implements DeviceService {
 
 	private final SecurityService securityService;
 
+	private final KafkaTemplate<String, String> kafkaTemplate;
+
 	@Autowired
-	public DeviceServiceImpl(ConsumerService consumerService, ProducerService producerService, StorageService storageService, SecurityService securityService) {
+	public DeviceServiceImpl(ConsumerService consumerService, ProducerService producerService, StorageService storageService, SecurityService securityService, KafkaTemplate<String, String> kafkaTemplate) {
 		this.consumerService = consumerService;
 		this.producerService = producerService;
 		this.storageService = storageService;
 		this.securityService = securityService;
+		this.kafkaTemplate = kafkaTemplate;
 	}
 
 	@Override
@@ -78,5 +88,33 @@ public class DeviceServiceImpl implements DeviceService {
 			device = Optional.ofNullable(storageService.getStorageById(deviceId));
 		}
 		return device.orElseThrow(() -> new DeviceNotFoundException("Device with ID " + deviceId + " not found"));
+	}
+
+	@Override
+	public Device updateDevice(Long deviceId, @Valid Device device) {
+		Device existingDevice = getDeviceById(deviceId);
+		if (existingDevice instanceof Consumer) {
+			consumerService.updateConsumer(deviceId, (Consumer) existingDevice);
+		} else if (existingDevice instanceof Producer) {
+			producerService.updateProducer(deviceId, (Producer) existingDevice);
+		} else if (existingDevice instanceof Storage) {
+			storageService.updateStorage(deviceId, (Storage) existingDevice);
+		}
+		return existingDevice;
+	}
+
+	@Override
+	public Map<String, String> toggleDeviceOnOff(Long deviceId, boolean active) {
+		Device device = getDeviceById(deviceId);
+		device.setActive(active);
+		Device updatedDevice = updateDevice(deviceId, device);
+		Map<String, String> response = Map.of(
+				"message", "Successfully updated Device with ID " + updatedDevice.getId(),
+				"id", updatedDevice.getId().toString(),
+				"active", updatedDevice.isActive() ? "true" : "false"
+		);
+		String event = String.format("{\"deviceId\": %d, \"deviceType\": \"%s\", \"active\": %b, \"timestamp\": \"%s\"}", device.getId(), device.getClass().getSimpleName(), active, LocalDateTime.now());
+		kafkaTemplate.send("device-events", event);
+		return response;
 	}
 }

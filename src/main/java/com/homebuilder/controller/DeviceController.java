@@ -5,12 +5,11 @@ import com.homebuilder.entity.Device;
 import com.homebuilder.service.DeviceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author André Heinen
@@ -41,12 +40,23 @@ public class DeviceController {
 	}
 
 	@GetMapping("/admin")
+	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<List<Device>> getAllDevices() {
-		return ResponseEntity.ok(deviceService.getAllDevices());
+		List<Device> deviceList = deviceService.getAllDevices();
+		return ResponseEntity.ok(deviceList);
 	}
 
 	@GetMapping("/admin/{deviceId}")
+	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<Device> getDeviceById(@PathVariable Long deviceId) {
-		return ResponseEntity.ok(deviceService.getDeviceById(deviceId));
+		Device device = deviceService.getDeviceById(deviceId);
+		return ResponseEntity.ok(device);
+	}
+
+	@PostMapping("/system/{deviceId}/toggle")
+	@PreAuthorize("hasRole('ADMIN') or hasRole('SYSTEM')")
+	public ResponseEntity<Map<String, String>> toggleDeviceOnOff(@PathVariable Long deviceId, @RequestParam boolean active) {
+		Map<String, String> success = deviceService.toggleDeviceOnOff(deviceId, active);
+		return ResponseEntity.ok().body(success);
 	}
 }
