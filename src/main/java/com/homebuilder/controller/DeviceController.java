@@ -39,6 +39,12 @@ public class DeviceController {
 		return ResponseEntity.ok(dto);
 	}
 
+	@PostMapping("/{deviceId}/toggle")
+	public ResponseEntity<Map<String, String>> toggleDeviceOnOffForUser(@PathVariable Long deviceId, @RequestParam boolean active) {
+		Map<String, String> success = deviceService.toggleDeviceOnOffForUser(deviceId, active);
+		return ResponseEntity.ok().body(success);
+	}
+
 	@GetMapping("/admin")
 	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<List<Device>> getAllDevices() {

@@ -12,6 +12,8 @@ public interface DeviceService {
 
 	List<Device> getAllDevicesFromUser();
 	Device getDeviceByIdFromUser(Long deviceId);
+	Device updateDeviceForUser(Long deviceId, Device device);
+	Map<String, String> toggleDeviceOnOffForUser(Long deviceId, boolean active);
 
 	List<Device> getAllDevices();
 	Device getDeviceById(Long deviceId);

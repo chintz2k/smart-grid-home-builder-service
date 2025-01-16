@@ -40,6 +40,26 @@ public class DeviceServiceImpl implements DeviceService {
 		this.kafkaTemplate = kafkaTemplate;
 	}
 
+	private void publishDeviceActivity(boolean active, Device device) {
+		String event = String.format("{\"deviceId\": %d, \"deviceType\": \"%s\", \"active\": %b, \"timestamp\": \"%s\"}", device.getId(), device.getClass().getSimpleName(), active, LocalDateTime.now());
+		kafkaTemplate.send("device-events", event).whenComplete((result, exception) -> {
+			if (exception != null) {
+				System.err.println("Fehler beim Senden des Events: " + exception.getMessage());
+			}
+		});
+	}
+
+	private Device saveDevice(Long deviceId, Device existingDevice) {
+		if (existingDevice instanceof Consumer) {
+			consumerService.updateConsumer(deviceId, (Consumer) existingDevice);
+		} else if (existingDevice instanceof Producer) {
+			producerService.updateProducer(deviceId, (Producer) existingDevice);
+		} else if (existingDevice instanceof Storage) {
+			storageService.updateStorage(deviceId, (Storage) existingDevice);
+		}
+		return existingDevice;
+	}
+
 	@Override
 	public List<Device> getAllDevicesFromUser() {
 		List<Device> devices = new ArrayList<>();
@@ -55,6 +75,7 @@ public class DeviceServiceImpl implements DeviceService {
 		return devices;
 	}
 
+	@Override
 	public Device getDeviceByIdFromUser(Long deviceId) {
 		Long userId = securityService.getCurrentUserId();
 		Optional<Device> device = Optional.ofNullable(consumerService.getConsumerById(deviceId));
@@ -68,13 +89,31 @@ public class DeviceServiceImpl implements DeviceService {
 	}
 
 	@Override
+	public Device updateDeviceForUser(Long deviceId, @Valid Device device) {
+		Device existingDevice = getDeviceByIdFromUser(deviceId);
+		return saveDevice(deviceId, existingDevice);
+	}
+
+	@Override
+	public Map<String, String> toggleDeviceOnOffForUser(Long deviceId, boolean active) {
+		Device device = getDeviceByIdFromUser(deviceId);
+		device.setActive(active);
+		Device updatedDevice = updateDeviceForUser(deviceId, device);
+		publishDeviceActivity(active, updatedDevice);
+		Map<String, String> response = Map.of(
+				"message", "Successfully updated Device with ID " + updatedDevice.getId(),
+				"id", updatedDevice.getId().toString(),
+				"active", updatedDevice.isActive() ? "true" : "false"
+		);
+		return response;
+	}
+
+	@Override
 	public List<Device> getAllDevices() {
 		List<Device> devices = new ArrayList<>();
-
 		devices.addAll(consumerService.getAllConsumers());
 		devices.addAll(producerService.getAllProducers());
 		devices.addAll(storageService.getAllStorages());
-
 		return devices;
 	}
 
@@ -93,14 +132,7 @@ public class DeviceServiceImpl implements DeviceService {
 	@Override
 	public Device updateDevice(Long deviceId, @Valid Device device) {
 		Device existingDevice = getDeviceById(deviceId);
-		if (existingDevice instanceof Consumer) {
-			consumerService.updateConsumer(deviceId, (Consumer) existingDevice);
-		} else if (existingDevice instanceof Producer) {
-			producerService.updateProducer(deviceId, (Producer) existingDevice);
-		} else if (existingDevice instanceof Storage) {
-			storageService.updateStorage(deviceId, (Storage) existingDevice);
-		}
-		return existingDevice;
+		return saveDevice(deviceId, existingDevice);
 	}
 
 	@Override
@@ -108,13 +140,12 @@ public class DeviceServiceImpl implements DeviceService {
 		Device device = getDeviceById(deviceId);
 		device.setActive(active);
 		Device updatedDevice = updateDevice(deviceId, device);
+		publishDeviceActivity(active, updatedDevice);
 		Map<String, String> response = Map.of(
 				"message", "Successfully updated Device with ID " + updatedDevice.getId(),
 				"id", updatedDevice.getId().toString(),
 				"active", updatedDevice.isActive() ? "true" : "false"
 		);
-		String event = String.format("{\"deviceId\": %d, \"deviceType\": \"%s\", \"active\": %b, \"timestamp\": \"%s\"}", device.getId(), device.getClass().getSimpleName(), active, LocalDateTime.now());
-		kafkaTemplate.send("device-events", event);
 		return response;
 	}
 }
