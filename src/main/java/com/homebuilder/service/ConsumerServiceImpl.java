@@ -74,6 +74,22 @@ public class ConsumerServiceImpl implements ConsumerService {
 	}
 
 	@Override
+	public Map<String, String> archiveConsumerForUser(Long consumerId) {
+		Long userId = securityService.getCurrentUserId();
+		Consumer consumer = getConsumerByIdFromUser(consumerId);
+		consumer.setArchived(true);
+		if (!consumer.getUserId().equals(userId)) {
+			throw new UnauthorizedAccessException("Unauthorized access to consumer with ID " + consumerId);
+		}
+		Map<String, String> response = Map.of(
+				"message", "Successfully archived Consumer with ID " + consumerId,
+				"id", consumerId.toString()
+		);
+		consumerRepository.save(consumer);
+		return response;
+	}
+
+	@Override
 	public Map<String, String> deleteConsumerForUser(Long consumerId) {
 		Long userId = securityService.getCurrentUserId();
 		Consumer consumer = getConsumerByIdFromUser(consumerId);

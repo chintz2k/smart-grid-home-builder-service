@@ -76,6 +76,21 @@ public class StorageServiceImpl implements StorageService {
 	}
 
 	@Override
+	public Map<String, String> archiveStorageForUser(Long storageId) {
+		Long userId = securityService.getCurrentUserId();
+		Storage storage = getStorageByIdFromUser(storageId);
+		if (!storage.getUserId().equals(userId)) {
+			throw new UnauthorizedAccessException("Unauthorized access to storage with ID " + storageId);
+		}
+		Map<String, String> response = Map.of(
+				"message", "Successfully archived SmartConsumer with ID " + storageId,
+				"id", storageId.toString()
+		);
+		storageRepository.save(storage);
+		return response;
+	}
+
+	@Override
 	public Map<String, String> deleteStorageForUser(Long storageId) {
 		Long userId = securityService.getCurrentUserId();
 		Storage storage = getStorageByIdFromUser(storageId);

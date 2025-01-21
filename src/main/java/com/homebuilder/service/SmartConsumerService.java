@@ -15,6 +15,7 @@ public interface SmartConsumerService {
 	List<SmartConsumer> getAllSmartConsumersFromUser();
 	SmartConsumer getSmartConsumerByIdFromUser(Long smartConsumerId);
 	SmartConsumer updateSmartConsumerForUser(Long existingConsumerId, SmartConsumerRequest request);
+	Map<String, String> archiveSmartConsumerForUser(Long smartConsumerId);
 	Map<String, String> deleteSmartConsumerForUser(Long smartConsumerId);
 
 	List<SmartConsumer> getAllSmartConsumers();

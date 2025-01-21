@@ -1,9 +1,6 @@
 package com.homebuilder.service;
 
-import com.homebuilder.entity.Consumer;
-import com.homebuilder.entity.Device;
-import com.homebuilder.entity.Producer;
-import com.homebuilder.entity.Storage;
+import com.homebuilder.entity.*;
 import com.homebuilder.exception.DeviceNotFoundException;
 import com.homebuilder.security.SecurityService;
 import jakarta.validation.Valid;
@@ -41,12 +38,44 @@ public class DeviceServiceImpl implements DeviceService {
 	}
 
 	private void publishDeviceActivity(boolean active, Device device) {
-		String event = String.format("{\"deviceId\": %d, \"deviceType\": \"%s\", \"active\": %b, \"timestamp\": \"%s\"}", device.getId(), device.getClass().getSimpleName(), active, LocalDateTime.now());
-		kafkaTemplate.send("device-events", event).whenComplete((result, exception) -> {
-			if (exception != null) {
-				System.err.println("Fehler beim Senden des Events: " + exception.getMessage());
+		if (device.isArchived()) {
+			return;
+		}
+		if (device instanceof Consumer consumer) {
+			if (device instanceof SmartConsumer smartConsumer) {
+				String event = String.format("{\"deviceId\": %d, \"deviceType\": \"%s\", \"ownerId\": %d, \"commercial\": %b, \"active\": %b, \"powerConsumption\": %f, \"timestamp\": \"%s\"}",
+						smartConsumer.getId(), smartConsumer.getClass().getSimpleName(), smartConsumer.getUserId(), securityService.isCommercialUser(), active, smartConsumer.getPowerConsumption(), LocalDateTime.now());
+				kafkaTemplate.send("smart-consumer-events", event).whenComplete((result, exception) -> {
+					if (exception != null) {
+						System.err.println("Fehler beim Senden des Events: " + exception.getMessage());
+					}
+				});
+				return;
 			}
-		});
+			String event = String.format("{\"deviceId\": %d, \"deviceType\": \"%s\", \"ownerId\": %d, \"commercial\": %b, \"active\": %b, \"powerConsumption\": %f, \"timestamp\": \"%s\"}",
+					consumer.getId(), consumer.getClass().getSimpleName(), consumer.getUserId(), securityService.isCommercialUser(), active, consumer.getPowerConsumption(), LocalDateTime.now());
+			kafkaTemplate.send("consumer-events", event).whenComplete((result, exception) -> {
+				if (exception != null) {
+					System.err.println("Fehler beim Senden des Events: " + exception.getMessage());
+				}
+			});
+		} else if (device instanceof Producer producer) {
+			String event = String.format("{\"deviceId\": %d, \"deviceType\": \"%s\", \"ownerId\": %d, \"commercial\": %b, \"active\": %b, \"powerProduction\": %f, \"timestamp\": \"%s\"}",
+					producer.getId(), producer.getClass().getSimpleName(), producer.getUserId(), securityService.isCommercialUser(), active, producer.getPowerProduction(), LocalDateTime.now());
+			kafkaTemplate.send("producer-events", event).whenComplete((result, exception) -> {
+				if (exception != null) {
+					System.err.println("Fehler beim Senden des Events: " + exception.getMessage());
+				}
+			});
+		} else if (device instanceof Storage storage) {
+			String event = String.format("{\"deviceId\": %d, \"deviceType\": \"%s\", \"ownerId\": %d, \"commercial\": %b, \"active\": %b, \"capacity\": %f, \"currentCharge\": %f, \"chargingPriority\": %d, \"consumingPriority\": %d, \"timestamp\": \"%s\"}",
+					storage.getId(), storage.getClass().getSimpleName(), storage.getUserId(), securityService.isCommercialUser(), active, storage.getCapacity(), storage.getCurrentCharge(), storage.getChargingPriority(), storage.getConsumingPriority(), LocalDateTime.now());
+			kafkaTemplate.send("storage-events", event).whenComplete((result, exception) -> {
+				if (exception != null) {
+					System.err.println("Fehler beim Senden des Events: " + exception.getMessage());
+				}
+			});
+		}
 	}
 
 	private Device saveDevice(Long deviceId, Device existingDevice) {
@@ -89,6 +118,17 @@ public class DeviceServiceImpl implements DeviceService {
 	}
 
 	@Override
+	public boolean isDeviceActiveFromUser(Long deviceId) {
+		Long userId = securityService.getCurrentUserId();
+		Device device = getDeviceByIdFromUser(deviceId);
+		if (!device.getUserId().equals(userId)) {
+			throw new DeviceNotFoundException("Device with ID " + deviceId + " not found or not accessible by user with ID " + userId);
+		}
+		boolean active = device.isActive();
+		return active;
+	}
+
+	@Override
 	public Device updateDeviceForUser(Long deviceId, @Valid Device device) {
 		Device existingDevice = getDeviceByIdFromUser(deviceId);
 		return saveDevice(deviceId, existingDevice);
@@ -127,6 +167,13 @@ public class DeviceServiceImpl implements DeviceService {
 			device = Optional.ofNullable(storageService.getStorageById(deviceId));
 		}
 		return device.orElseThrow(() -> new DeviceNotFoundException("Device with ID " + deviceId + " not found"));
+	}
+
+	@Override
+	public boolean isDeviceActive(Long deviceId) {
+		Device device = getDeviceById(deviceId);
+		boolean active = device.isActive();
+		return active;
 	}
 
 	@Override

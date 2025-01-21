@@ -56,6 +56,12 @@ public class SmartConsumerProgramController {
 		return ResponseEntity.ok(dto);
 	}
 
+	@PutMapping("/{smartConsumerProgramId}/archive")
+	public ResponseEntity<Map<String, String>> archiveSmartConsumerProgramForUser(@PathVariable Long smartConsumerProgramId) {
+		Map<String, String> success = smartConsumerProgramService.archiveSmartConsumerProgramForUser(smartConsumerProgramId);
+		return ResponseEntity.ok().body(success);
+	}
+
 	@DeleteMapping("/{smartConsumerProgramId}")
 	public ResponseEntity<Map<String, String>> deleteSmartConsumerProgramForUser(@PathVariable Long smartConsumerProgramId) {
 		Map<String, String> success = smartConsumerProgramService.deleteSmartConsumerProgramForUser(smartConsumerProgramId);

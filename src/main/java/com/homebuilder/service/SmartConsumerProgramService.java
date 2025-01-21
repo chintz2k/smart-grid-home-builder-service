@@ -15,6 +15,7 @@ public interface SmartConsumerProgramService {
 	List<SmartConsumerProgram> getAllSmartConsumerProgramsFromUser();
 	SmartConsumerProgram getSmartConsumerProgramByIdFromUser(Long smartConsumerProgramId);
 	SmartConsumerProgram updateSmartConsumerProgramForUser(Long existingProgramId, SmartConsumerProgramRequest request);
+	Map<String, String> archiveSmartConsumerProgramForUser(Long smartConsumerProgramId);
 	Map<String, String> deleteSmartConsumerProgramForUser(Long smartConsumerProgramId);
 
 	List<SmartConsumerProgram> getAllSmartConsumerPrograms();

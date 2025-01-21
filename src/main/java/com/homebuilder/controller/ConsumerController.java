@@ -56,6 +56,12 @@ public class ConsumerController {
 		return ResponseEntity.ok(dto);
 	}
 
+	@PutMapping("/{consumerId}/archive")
+	public ResponseEntity<Map<String, String>> archiveConsumerForUser(@PathVariable Long consumerId) {
+		Map<String, String> success = consumerService.archiveConsumerForUser(consumerId);
+		return ResponseEntity.ok().body(success);
+	}
+
 	@DeleteMapping("/{consumerId}")
 	public ResponseEntity<Map<String, String>> deleteConsumerForUser(@PathVariable Long consumerId) {
 		Map<String, String> success = consumerService.deleteConsumerForUser(consumerId);

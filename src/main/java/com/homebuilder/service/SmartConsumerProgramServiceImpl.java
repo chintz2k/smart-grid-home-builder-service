@@ -85,6 +85,21 @@ public class SmartConsumerProgramServiceImpl implements SmartConsumerProgramServ
 	}
 
 	@Override
+	public Map<String, String> archiveSmartConsumerProgramForUser(Long smartConsumerProgramId) {
+		Long userId = securityService.getCurrentUserId();
+		SmartConsumerProgram smartConsumerProgram = getSmartConsumerProgramByIdFromUser(smartConsumerProgramId);
+		if (!smartConsumerProgram.getUserId().equals(userId)) {
+			throw new UnauthorizedAccessException("Unauthorized access to SmartConsumerProgram with ID " + smartConsumerProgramId);
+		}
+		Map<String, String> response = Map.of(
+				"message", "Successfully archived SmartConsumerProgram with ID " + smartConsumerProgramId,
+				"id", smartConsumerProgramId.toString()
+		);
+		smartConsumerProgramRepository.save(smartConsumerProgram);
+		return response;
+	}
+
+	@Override
 	public Map<String, String> deleteSmartConsumerProgramForUser(Long smartConsumerProgramId) {
 		Long userId = securityService.getCurrentUserId();
 		SmartConsumerProgram smartConsumerProgram = getSmartConsumerProgramByIdFromUser(smartConsumerProgramId);

@@ -61,4 +61,13 @@ public class JwtUtil {
 				.getBody();
 		return (String) claims.get("role");
 	}
+
+	public boolean isCommercial(String token) {
+		Claims claims = Jwts.parserBuilder()
+				.setSigningKey(key)
+				.build().parseClaimsJws(token)
+				.getBody();
+		boolean isCommercial = (boolean) claims.get("commercial");
+		return isCommercial;
+	}
 }

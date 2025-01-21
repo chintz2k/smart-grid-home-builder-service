@@ -15,6 +15,7 @@ public interface StorageService {
 	List<Storage> getAllStoragesFromUser();
 	Storage getStorageByIdFromUser(Long storageId);
 	Storage updateStorageForUser(Long storageId, StorageRequest request);
+	Map<String, String> archiveStorageForUser(Long storageId);
 	Map<String, String> deleteStorageForUser(Long storageId);
 
 	List<Storage> getAllStorages();

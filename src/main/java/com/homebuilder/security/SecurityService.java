@@ -47,4 +47,17 @@ public class SecurityService {
 
 		throw new UnauthorizedAccessException("Invalid user ID in authentication context");
 	}
+
+	public boolean isCommercialUser() {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		if (authentication == null || authentication.getPrincipal() == null) {
+			throw new UnauthorizedAccessException("User is not authenticated");
+		}
+
+		if (authentication instanceof UsernamePasswordAuthenticationToken) {
+			return jwtUtil.isCommercial(authentication.getCredentials().toString());
+		}
+
+		throw new UnauthorizedAccessException("Invalid user ID in authentication context");
+	}
 }

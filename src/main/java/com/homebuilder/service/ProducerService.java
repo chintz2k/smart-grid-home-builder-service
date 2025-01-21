@@ -15,6 +15,7 @@ public interface ProducerService {
 	List<Producer> getAllProducersFromUser();
 	Producer getProducerByIdFromUser(Long producerId);
 	Producer updateProducerForUser(Long producerId, ProducerRequest request);
+	Map<String, String> archiveProducerForUser(Long producerId);
 	Map<String, String> deleteProducerForUser(Long producerId);
 
 	List<Producer> getAllProducers();

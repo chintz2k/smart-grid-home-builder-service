@@ -15,6 +15,7 @@ public interface ConsumerService {
 	List<Consumer> getAllConsumersFromUser();
 	Consumer getConsumerByIdFromUser(Long consumerId);
 	Consumer updateConsumerForUser(Long consumerId, ConsumerRequest request);
+	Map<String, String> archiveConsumerForUser(Long consumerId);
 	Map<String, String> deleteConsumerForUser(Long consumerId);
 
 	List<Consumer> getAllConsumers();

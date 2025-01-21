@@ -56,6 +56,12 @@ public class SmartConsumerController {
 		return ResponseEntity.ok(dto);
 	}
 
+	@PutMapping("/{smartConsumerId}/archive")
+	public ResponseEntity<Map<String, String>> archiveSmartConsumerForUser(@PathVariable Long smartConsumerId) {
+		Map<String, String> success = smartConsumerService.archiveSmartConsumerForUser(smartConsumerId);
+		return ResponseEntity.ok().body(success);
+	}
+
 	@DeleteMapping("/{smartConsumerId}")
 	public ResponseEntity<Map<String, String>> deleteSmartConsumerForUser(@PathVariable Long smartConsumerId) {
 		Map<String, String> success = smartConsumerService.deleteSmartConsumerForUser(smartConsumerId);

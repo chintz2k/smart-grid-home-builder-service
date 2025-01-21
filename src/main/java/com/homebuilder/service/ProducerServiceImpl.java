@@ -74,6 +74,22 @@ public class ProducerServiceImpl implements ProducerService {
 	}
 
 	@Override
+	public Map<String, String> archiveProducerForUser(Long producerId) {
+		Long userId = securityService.getCurrentUserId();
+		Producer producer = getProducerByIdFromUser(producerId);
+		producer.setArchived(true);
+		if (!producer.getUserId().equals(userId)) {
+			throw new UnauthorizedAccessException("Unauthorized access to producer with ID " + producerId);
+		}
+		Map<String, String> response = Map.of(
+				"message", "Successfully archived Producer with ID " + producerId,
+				"id", producerId.toString()
+		);
+		producerRepository.save(producer);
+		return response;
+	}
+
+	@Override
 	public Map<String, String> deleteProducerForUser(Long producerId) {
 		Long userId = securityService.getCurrentUserId();
 		Producer producer = getProducerByIdFromUser(producerId);

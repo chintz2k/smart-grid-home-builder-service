@@ -39,6 +39,13 @@ public class DeviceController {
 		return ResponseEntity.ok(dto);
 	}
 
+	@GetMapping("/{deviceId}/status")
+	public ResponseEntity<Map<String, String>> getDeviceStatusByIdFromUser(@PathVariable Long deviceId) {
+		boolean active = deviceService.isDeviceActiveFromUser(deviceId);
+		Map<String, String> status = Map.of(deviceId.toString(), String.valueOf(active));
+		return ResponseEntity.ok(status);
+	}
+
 	@PostMapping("/{deviceId}/toggle")
 	public ResponseEntity<Map<String, String>> toggleDeviceOnOffForUser(@PathVariable Long deviceId, @RequestParam boolean active) {
 		Map<String, String> success = deviceService.toggleDeviceOnOffForUser(deviceId, active);
@@ -57,6 +64,14 @@ public class DeviceController {
 	public ResponseEntity<Device> getDeviceById(@PathVariable Long deviceId) {
 		Device device = deviceService.getDeviceById(deviceId);
 		return ResponseEntity.ok(device);
+	}
+
+	@GetMapping("/admin/{deviceId}/status")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<Map<String, String>> getDeviceStatusById(@PathVariable Long deviceId) {
+		boolean active = deviceService.isDeviceActive(deviceId);
+		Map<String, String> status = Map.of(deviceId.toString(), String.valueOf(active));
+		return ResponseEntity.ok(status);
 	}
 
 	@PostMapping("/system/{deviceId}/toggle")

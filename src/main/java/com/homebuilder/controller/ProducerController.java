@@ -56,6 +56,12 @@ public class ProducerController {
 		return ResponseEntity.ok(dto);
 	}
 
+	@PutMapping("/{producerId}/archive")
+	public ResponseEntity<Map<String, String>> archiveProducerForUser(@PathVariable Long producerId) {
+		Map<String, String> success = producerService.archiveProducerForUser(producerId);
+		return ResponseEntity.ok().body(success);
+	}
+
 	@DeleteMapping("/{producerId}")
 	public ResponseEntity<Map<String, String>> deleteProducerForUser(@PathVariable Long producerId) {
 		Map<String, String> success = producerService.deleteProducerForUser(producerId);

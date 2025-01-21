@@ -56,6 +56,12 @@ public class StorageController {
 		return ResponseEntity.ok(dto);
 	}
 
+	@PutMapping("/{storageId}/archive")
+	public ResponseEntity<Map<String, String>> archiveStorageForUser(@PathVariable Long storageId) {
+		Map<String, String> success = storageService.archiveStorageForUser(storageId);
+		return ResponseEntity.ok().body(success);
+	}
+
 	@DeleteMapping("/{storageId}")
 	public ResponseEntity<Map<String, String>> deleteStorageForUser(@PathVariable Long storageId) {
 		Map<String, String> success = storageService.deleteStorageForUser(storageId);
