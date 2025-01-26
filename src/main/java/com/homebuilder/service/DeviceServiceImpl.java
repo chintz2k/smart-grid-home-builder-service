@@ -104,17 +104,46 @@ public class DeviceServiceImpl implements DeviceService {
 		return devices;
 	}
 
+	private Optional<Device> getSafeConsumerById(Long deviceId) {
+		try {
+			return Optional.ofNullable(consumerService.getConsumerById(deviceId));
+		} catch (DeviceNotFoundException e) {
+			return Optional.empty();
+		}
+	}
+
+	private Optional<Device> getSafeProducerById(Long deviceId) {
+		try {
+			return Optional.ofNullable(producerService.getProducerById(deviceId));
+		} catch (DeviceNotFoundException e) {
+			return Optional.empty();
+		}
+	}
+
+	private Optional<Device> getSafeStorageById(Long deviceId) {
+		try {
+			return Optional.ofNullable(storageService.getStorageById(deviceId));
+		} catch (DeviceNotFoundException e) {
+			return Optional.empty();
+		}
+	}
+
 	@Override
 	public Device getDeviceByIdFromUser(Long deviceId) {
 		Long userId = securityService.getCurrentUserId();
-		Optional<Device> device = Optional.ofNullable(consumerService.getConsumerById(deviceId));
-		if (device.isEmpty()) {
-			device = Optional.ofNullable(producerService.getProducerById(deviceId));
-		}
-		if (device.isEmpty()) {
-			device = Optional.ofNullable(storageService.getStorageById(deviceId));
-		}
-		return device.filter(d -> d.getUserId().equals(userId)).orElseThrow(() -> new DeviceNotFoundException("Device with ID " + deviceId + " not found or not accessible by user with ID " + userId));
+		List<Optional<Device>> devices = List.of(
+				getSafeConsumerById(deviceId),
+				getSafeProducerById(deviceId),
+				getSafeStorageById(deviceId)
+		);
+		Optional<Device> foundDevice = devices.stream()
+				.filter(Optional::isPresent)
+				.map(Optional::get)
+				.filter(d -> d.getUserId().equals(userId))
+				.findFirst();
+		Device device = foundDevice.orElseThrow(() ->
+				new DeviceNotFoundException("Device with ID " + deviceId + " not found or not accessible by user with ID " + userId));
+		return device;
 	}
 
 	@Override
