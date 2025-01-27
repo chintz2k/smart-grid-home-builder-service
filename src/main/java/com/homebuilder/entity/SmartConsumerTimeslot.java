@@ -2,7 +2,7 @@ package com.homebuilder.entity;
 
 import jakarta.persistence.*;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 /**
  * @author André Heinen
@@ -14,11 +14,11 @@ public class SmartConsumerTimeslot {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	private Instant startTime;
+	private LocalDateTime startTime;
 
-	private Instant endTime;
+	private LocalDateTime endTime;
 
-	private Instant cancelledAt;
+	private LocalDateTime cancelledAt;
 
 	@Enumerated(EnumType.STRING)
 	private SmartConsumerTimeslotStatusCodes status;
@@ -45,27 +45,27 @@ public class SmartConsumerTimeslot {
 		this.id = id;
 	}
 
-	public Instant getStartTime() {
+	public LocalDateTime getStartTime() {
 		return startTime;
 	}
 
-	public void setStartTime(Instant startTime) {
+	public void setStartTime(LocalDateTime startTime) {
 		this.startTime = startTime;
 	}
 
-	public Instant getEndTime() {
+	public LocalDateTime getEndTime() {
 		return endTime;
 	}
 
-	public void setEndTime(Instant endTime) {
+	public void setEndTime(LocalDateTime endTime) {
 		this.endTime = endTime;
 	}
 
-	public Instant getCancelledAt() {
+	public LocalDateTime getCancelledAt() {
 		return cancelledAt;
 	}
 
-	public void setCancelledAt(Instant cancelledAt) {
+	public void setCancelledAt(LocalDateTime cancelledAt) {
 		this.cancelledAt = cancelledAt;
 	}
 

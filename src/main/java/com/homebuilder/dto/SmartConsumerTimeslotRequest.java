@@ -5,7 +5,7 @@ import com.homebuilder.entity.SmartConsumerTimeslotStatusCodes;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 /**
  * @author André Heinen
@@ -16,7 +16,7 @@ public class SmartConsumerTimeslotRequest {
 
 	@NotNull(message = "startTime is required")
 	@Future(message = "startTime must be in the future")
-	private Instant startTime;
+	private LocalDateTime startTime;
 
 	private SmartConsumerTimeslotStatusCodes status;
 
@@ -40,11 +40,11 @@ public class SmartConsumerTimeslotRequest {
 		this.id = id;
 	}
 
-	public Instant getStartTime() {
+	public LocalDateTime getStartTime() {
 		return startTime;
 	}
 
-	public void setStartTime(Instant startTime) {
+	public void setStartTime(LocalDateTime startTime) {
 		this.startTime = startTime;
 	}
 
