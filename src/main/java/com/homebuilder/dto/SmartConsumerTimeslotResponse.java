@@ -3,7 +3,7 @@ package com.homebuilder.dto;
 import com.homebuilder.entity.SmartConsumerTimeslot;
 import com.homebuilder.entity.SmartConsumerTimeslotStatusCodes;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 /**
  * @author André Heinen
@@ -11,9 +11,9 @@ import java.time.LocalDateTime;
 public class SmartConsumerTimeslotResponse {
 
 	private final Long id;
-	private final LocalDateTime startTime;
-	private final LocalDateTime endTime;
-	private final LocalDateTime cancelledAt;
+	private final Instant startTime;
+	private final Instant endTime;
+	private final Instant cancelledAt;
 	private final SmartConsumerTimeslotStatusCodes status;
 	private final Long smartConsumerId;
 	private final boolean archived;
@@ -32,15 +32,15 @@ public class SmartConsumerTimeslotResponse {
 		return id;
 	}
 
-	public LocalDateTime getStartTime() {
+	public Instant getStartTime() {
 		return startTime;
 	}
 
-	public LocalDateTime getEndTime() {
+	public Instant getEndTime() {
 		return endTime;
 	}
 
-	public LocalDateTime getCancelledAt() {
+	public Instant getCancelledAt() {
 		return cancelledAt;
 	}
 

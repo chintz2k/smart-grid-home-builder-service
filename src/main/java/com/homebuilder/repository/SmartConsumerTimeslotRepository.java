@@ -4,7 +4,7 @@ import com.homebuilder.entity.SmartConsumer;
 import com.homebuilder.entity.SmartConsumerTimeslot;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 /**
@@ -13,6 +13,6 @@ import java.util.List;
 public interface SmartConsumerTimeslotRepository extends JpaRepository<SmartConsumerTimeslot, Long> {
 
     List<SmartConsumerTimeslot> findByUserId(Long userId);
-    List<SmartConsumerTimeslot> findBySmartConsumerAndStartTimeLessThanAndEndTimeGreaterThan(SmartConsumer smartConsumer, LocalDateTime endTime, LocalDateTime startTime);
+    List<SmartConsumerTimeslot> findBySmartConsumerAndStartTimeLessThanAndEndTimeGreaterThan(SmartConsumer smartConsumer, Instant endTime, Instant startTime);
 
 }
