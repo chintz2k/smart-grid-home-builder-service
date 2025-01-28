@@ -136,4 +136,27 @@ public class Producer extends Device {
 		this.nuclearPower = nuclearPower;
 		updateRenewableStatus();
 	}
+
+	public String getPowerType() {
+		if (solarPower) {
+			return "Solar Power";
+		} else if (windPower) {
+			return "Wind Power";
+		} else if (hydroPower) {
+			return "Hydro Power";
+		} else if (geothermalPower) {
+			return "Geothermal Power";
+		} else if (biomassPower) {
+			return "Biomass Power";
+		} else if (coalPower) {
+			return "Coal Power";
+		} else if (naturalGasPower) {
+			return "Natural Gas Power";
+		} else if (oilPower) {
+			return "Oil Power";
+		} else if (nuclearPower) {
+			return "Nuclear Power";
+		}
+		return "Unknown Power Type";
+	}
 }

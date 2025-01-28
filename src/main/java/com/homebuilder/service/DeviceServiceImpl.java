@@ -60,8 +60,8 @@ public class DeviceServiceImpl implements DeviceService {
 				}
 			});
 		} else if (device instanceof Producer producer) {
-			String event = String.format("{\"deviceId\": %d, \"deviceType\": \"%s\", \"ownerId\": %d, \"commercial\": %b, \"active\": %b, \"powerProduction\": %f, \"timestamp\": \"%s\"}",
-					producer.getId(), producer.getClass().getSimpleName(), producer.getUserId(), securityService.isCommercialUser(), active, producer.getPowerProduction(), LocalDateTime.now());
+			String event = String.format("{\"deviceId\": %d, \"deviceType\": \"%s\", \"ownerId\": %d, \"commercial\": %b, \"active\": %b, \"powerType\": \"%s\", \"powerProduction\": %f, \"timestamp\": \"%s\"}",
+					producer.getId(), producer.getClass().getSimpleName(), producer.getUserId(), securityService.isCommercialUser(), active, producer.getPowerType(), producer.getPowerProduction(), LocalDateTime.now());
 			kafkaTemplate.send("producer-events", event).whenComplete((result, exception) -> {
 				if (exception != null) {
 					System.err.println("Fehler beim Senden des Events: " + exception.getMessage());
