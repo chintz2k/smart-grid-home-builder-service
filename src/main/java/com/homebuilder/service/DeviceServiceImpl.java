@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -41,10 +41,11 @@ public class DeviceServiceImpl implements DeviceService {
 		if (device.isArchived()) {
 			return;
 		}
+		Instant now = Instant.now();
 		if (device instanceof Consumer consumer) {
 			if (device instanceof SmartConsumer smartConsumer) {
 				String event = String.format("{\"deviceId\": %d, \"deviceType\": \"%s\", \"ownerId\": %d, \"commercial\": %b, \"active\": %b, \"powerConsumption\": %f, \"timestamp\": \"%s\"}",
-						smartConsumer.getId(), smartConsumer.getClass().getSimpleName(), smartConsumer.getUserId(), securityService.isCommercialUser(), active, smartConsumer.getPowerConsumption(), LocalDateTime.now());
+						smartConsumer.getId(), smartConsumer.getClass().getSimpleName(), smartConsumer.getUserId(), securityService.isCommercialUser(), active, smartConsumer.getPowerConsumption(), now);
 				kafkaTemplate.send("smart-consumer-events", event).whenComplete((result, exception) -> {
 					if (exception != null) {
 						System.err.println("Fehler beim Senden des Events: " + exception.getMessage());
@@ -53,7 +54,7 @@ public class DeviceServiceImpl implements DeviceService {
 				return;
 			}
 			String event = String.format("{\"deviceId\": %d, \"deviceType\": \"%s\", \"ownerId\": %d, \"commercial\": %b, \"active\": %b, \"powerConsumption\": %f, \"timestamp\": \"%s\"}",
-					consumer.getId(), consumer.getClass().getSimpleName(), consumer.getUserId(), securityService.isCommercialUser(), active, consumer.getPowerConsumption(), LocalDateTime.now());
+					consumer.getId(), consumer.getClass().getSimpleName(), consumer.getUserId(), securityService.isCommercialUser(), active, consumer.getPowerConsumption(), now);
 			kafkaTemplate.send("consumer-events", event).whenComplete((result, exception) -> {
 				if (exception != null) {
 					System.err.println("Fehler beim Senden des Events: " + exception.getMessage());
@@ -61,7 +62,7 @@ public class DeviceServiceImpl implements DeviceService {
 			});
 		} else if (device instanceof Producer producer) {
 			String event = String.format("{\"deviceId\": %d, \"deviceType\": \"%s\", \"ownerId\": %d, \"commercial\": %b, \"active\": %b, \"powerType\": \"%s\", \"renewable\": %b, \"powerProduction\": %f:, \"timestamp\": \"%s\"}",
-					producer.getId(), producer.getClass().getSimpleName(), producer.getUserId(), securityService.isCommercialUser(), active, producer.getPowerType(), producer.isRenewable(), producer.getPowerProduction(), LocalDateTime.now());
+					producer.getId(), producer.getClass().getSimpleName(), producer.getUserId(), securityService.isCommercialUser(), active, producer.getPowerType(), producer.isRenewable(), producer.getPowerProduction(), now);
 			kafkaTemplate.send("producer-events", event).whenComplete((result, exception) -> {
 				if (exception != null) {
 					System.err.println("Fehler beim Senden des Events: " + exception.getMessage());
@@ -69,7 +70,7 @@ public class DeviceServiceImpl implements DeviceService {
 			});
 		} else if (device instanceof Storage storage) {
 			String event = String.format("{\"deviceId\": %d, \"deviceType\": \"%s\", \"ownerId\": %d, \"commercial\": %b, \"active\": %b, \"capacity\": %f, \"currentCharge\": %f, \"chargingPriority\": %d, \"consumingPriority\": %d, \"timestamp\": \"%s\"}",
-					storage.getId(), storage.getClass().getSimpleName(), storage.getUserId(), securityService.isCommercialUser(), active, storage.getCapacity(), storage.getCurrentCharge(), storage.getChargingPriority(), storage.getConsumingPriority(), LocalDateTime.now());
+					storage.getId(), storage.getClass().getSimpleName(), storage.getUserId(), securityService.isCommercialUser(), active, storage.getCapacity(), storage.getCurrentCharge(), storage.getChargingPriority(), storage.getConsumingPriority(), now);
 			kafkaTemplate.send("storage-events", event).whenComplete((result, exception) -> {
 				if (exception != null) {
 					System.err.println("Fehler beim Senden des Events: " + exception.getMessage());

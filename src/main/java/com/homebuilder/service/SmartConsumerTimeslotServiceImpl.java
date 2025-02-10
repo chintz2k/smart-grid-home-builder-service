@@ -7,7 +7,6 @@ import com.homebuilder.entity.SmartConsumerTimeslot;
 import com.homebuilder.exception.DeviceNotFoundException;
 import com.homebuilder.exception.TimeslotOverlapException;
 import com.homebuilder.exception.UnauthorizedAccessException;
-import com.homebuilder.repository.SmartConsumerProgramRepository;
 import com.homebuilder.repository.SmartConsumerRepository;
 import com.homebuilder.repository.SmartConsumerTimeslotRepository;
 import com.homebuilder.security.SecurityService;
@@ -31,16 +30,14 @@ public class SmartConsumerTimeslotServiceImpl implements SmartConsumerTimeslotSe
 	private final SmartConsumerProgramService smartConsumerProgramService;
 
 	private final SecurityService securityService;
-	private final SmartConsumerProgramRepository smartConsumerProgramRepository;
 
 	@Autowired
-	public SmartConsumerTimeslotServiceImpl(SmartConsumerTimeslotRepository smartConsumerTimeslotRepository, SmartConsumerRepository smartConsumerRepository, SmartConsumerService smartConsumerService, SmartConsumerProgramService smartConsumerProgramService, SecurityService securityService, SmartConsumerProgramRepository smartConsumerProgramRepository) {
+	public SmartConsumerTimeslotServiceImpl(SmartConsumerTimeslotRepository smartConsumerTimeslotRepository, SmartConsumerRepository smartConsumerRepository, SmartConsumerService smartConsumerService, SmartConsumerProgramService smartConsumerProgramService, SecurityService securityService) {
 		this.smartConsumerTimeslotRepository = smartConsumerTimeslotRepository;
 		this.smartConsumerRepository = smartConsumerRepository;
 		this.smartConsumerService = smartConsumerService;
 		this.smartConsumerProgramService = smartConsumerProgramService;
 		this.securityService = securityService;
-		this.smartConsumerProgramRepository = smartConsumerProgramRepository;
 	}
 
 	@Override
@@ -91,7 +88,7 @@ public class SmartConsumerTimeslotServiceImpl implements SmartConsumerTimeslotSe
 		if (!existingTimeslot.getUserId().equals(userId)) {
 			throw new UnauthorizedAccessException("Unauthorized access to smartConsumerTimeslot with ID " + existingTimeslotId);
 		}
-		existingTimeslot.setStartTime(request.getStartTime());
+		existingTimeslot.setStartTime(request.getStartTimeAsInstant());
 		SmartConsumerProgram program = smartConsumerProgramService.getSmartConsumerProgramById(request.getSmartConsumerProgramId());
 		int durationInSeconds = program.getDurationInSeconds();
 		existingTimeslot.setEndTime(existingTimeslot.getStartTime().plusSeconds(durationInSeconds));

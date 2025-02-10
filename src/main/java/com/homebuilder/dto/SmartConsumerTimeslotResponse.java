@@ -3,7 +3,9 @@ package com.homebuilder.dto;
 import com.homebuilder.entity.SmartConsumerTimeslot;
 import com.homebuilder.entity.SmartConsumerTimeslotStatusCodes;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 /**
  * @author André Heinen
@@ -18,11 +20,11 @@ public class SmartConsumerTimeslotResponse {
 	private final Long smartConsumerId;
 	private final boolean archived;
 
-	public SmartConsumerTimeslotResponse(SmartConsumerTimeslot smartConsumerTimeslot) {
+	public SmartConsumerTimeslotResponse(SmartConsumerTimeslot smartConsumerTimeslot, String timeZone) {
 		this.id = smartConsumerTimeslot.getId();
-		this.startTime = smartConsumerTimeslot.getStartTime();
-		this.endTime = smartConsumerTimeslot.getEndTime();
-		this.cancelledAt = smartConsumerTimeslot.getCancelledAt();
+		this.startTime = convertInstantToLocalDateTime(smartConsumerTimeslot.getStartTime(), ZoneId.of(timeZone));
+		this.endTime = convertInstantToLocalDateTime(smartConsumerTimeslot.getEndTime(), ZoneId.of(timeZone));
+		this.cancelledAt = convertInstantToLocalDateTime(smartConsumerTimeslot.getCancelledAt(), ZoneId.of(timeZone));
 		this.status = smartConsumerTimeslot.getStatus();
 		this.smartConsumerId = smartConsumerTimeslot.getSmartConsumer().getId();
 		this.archived = smartConsumerTimeslot.isArchived();
@@ -54,5 +56,12 @@ public class SmartConsumerTimeslotResponse {
 
 	public boolean isArchived() {
 		return archived;
+	}
+
+	private LocalDateTime convertInstantToLocalDateTime(Instant instant, ZoneId zoneId) {
+		if (instant == null) {
+			return null;
+		}
+		return LocalDateTime.ofInstant(instant, zoneId);
 	}
 }

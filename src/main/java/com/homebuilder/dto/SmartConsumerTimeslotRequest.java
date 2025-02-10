@@ -5,7 +5,10 @@ import com.homebuilder.entity.SmartConsumerTimeslotStatusCodes;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 
 /**
  * @author André Heinen
@@ -17,6 +20,9 @@ public class SmartConsumerTimeslotRequest {
 	@NotNull(message = "startTime is required")
 	@Future(message = "startTime must be in the future")
 	private LocalDateTime startTime;
+
+	@NotNull(message = "timeZone is required")
+	private String timeZone;
 
 	private SmartConsumerTimeslotStatusCodes status;
 
@@ -46,6 +52,14 @@ public class SmartConsumerTimeslotRequest {
 
 	public void setStartTime(LocalDateTime startTime) {
 		this.startTime = startTime;
+	}
+
+	public String getTimeZone() {
+		return timeZone;
+	}
+
+	public void setTimeZone(String timeZone) {
+		this.timeZone = timeZone;
 	}
 
 	public SmartConsumerTimeslotStatusCodes getStatus() {
@@ -80,9 +94,19 @@ public class SmartConsumerTimeslotRequest {
 		this.archived = archived;
 	}
 
+	public Instant getStartTimeAsInstant() {
+		if (startTime == null || timeZone == null) {
+			throw new IllegalArgumentException("localStartTime and timeZone must not be null");
+		}
+
+		ZonedDateTime zonedDateTime = startTime.atZone(ZoneId.of(timeZone));
+
+		return zonedDateTime.toInstant();
+	}
+
 	public SmartConsumerTimeslot toEntity() {
 		SmartConsumerTimeslot smartConsumerTimeslot = new SmartConsumerTimeslot();
-		smartConsumerTimeslot.setStartTime(startTime);
+		smartConsumerTimeslot.setStartTime(getStartTimeAsInstant());
 		smartConsumerTimeslot.setArchived(archived);
 		return smartConsumerTimeslot;
 	}
