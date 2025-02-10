@@ -4,8 +4,8 @@ import com.homebuilder.entity.SmartConsumerTimeslot;
 import com.homebuilder.entity.SmartConsumerTimeslotStatusCodes;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 
 /**
  * @author André Heinen
@@ -13,18 +13,18 @@ import java.time.ZoneId;
 public class SmartConsumerTimeslotResponse {
 
 	private final Long id;
-	private final LocalDateTime startTime;
-	private final LocalDateTime endTime;
-	private final LocalDateTime cancelledAt;
+	private final ZonedDateTime startTime;
+	private final ZonedDateTime endTime;
+	private final ZonedDateTime cancelledAt;
 	private final SmartConsumerTimeslotStatusCodes status;
 	private final Long smartConsumerId;
 	private final boolean archived;
 
 	public SmartConsumerTimeslotResponse(SmartConsumerTimeslot smartConsumerTimeslot, String timeZone) {
 		this.id = smartConsumerTimeslot.getId();
-		this.startTime = convertInstantToLocalDateTime(smartConsumerTimeslot.getStartTime(), ZoneId.of(timeZone));
-		this.endTime = convertInstantToLocalDateTime(smartConsumerTimeslot.getEndTime(), ZoneId.of(timeZone));
-		this.cancelledAt = convertInstantToLocalDateTime(smartConsumerTimeslot.getCancelledAt(), ZoneId.of(timeZone));
+		this.startTime = convertInstantToZonedDateTime(smartConsumerTimeslot.getStartTime(), ZoneId.of(timeZone));
+		this.endTime = convertInstantToZonedDateTime(smartConsumerTimeslot.getEndTime(), ZoneId.of(timeZone));
+		this.cancelledAt = convertInstantToZonedDateTime(smartConsumerTimeslot.getCancelledAt(), ZoneId.of(timeZone));
 		this.status = smartConsumerTimeslot.getStatus();
 		this.smartConsumerId = smartConsumerTimeslot.getSmartConsumer().getId();
 		this.archived = smartConsumerTimeslot.isArchived();
@@ -34,15 +34,15 @@ public class SmartConsumerTimeslotResponse {
 		return id;
 	}
 
-	public LocalDateTime getStartTime() {
+	public ZonedDateTime getStartTime() {
 		return startTime;
 	}
 
-	public LocalDateTime getEndTime() {
+	public ZonedDateTime getEndTime() {
 		return endTime;
 	}
 
-	public LocalDateTime getCancelledAt() {
+	public ZonedDateTime getCancelledAt() {
 		return cancelledAt;
 	}
 
@@ -58,10 +58,10 @@ public class SmartConsumerTimeslotResponse {
 		return archived;
 	}
 
-	private LocalDateTime convertInstantToLocalDateTime(Instant instant, ZoneId zoneId) {
+	private ZonedDateTime convertInstantToZonedDateTime(Instant instant, ZoneId zoneId) {
 		if (instant == null) {
 			return null;
 		}
-		return LocalDateTime.ofInstant(instant, zoneId);
+		return ZonedDateTime.ofInstant(instant, zoneId);
 	}
 }
