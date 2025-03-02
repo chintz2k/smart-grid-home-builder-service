@@ -1,17 +1,22 @@
 package com.homebuilder.dto;
 
 import com.homebuilder.entity.Storage;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * @author André Heinen
  */
 public class StorageRequest {
 
-	private Long id;
+	private Long id = null;
 
 	@NotBlank(message = "name is required")
 	private String name;
+
+	private Long ownerId = null;
 
 	private boolean active = false;
 
@@ -21,8 +26,6 @@ public class StorageRequest {
 	@DecimalMin(value = "1.0", inclusive = true, message = "Capacity must be at least 1")
 	private double capacity;
 
-	@NotNull(message = "Current charge is required")
-	@PositiveOrZero(message = "Current charge must be non-negative")
 	private double currentCharge = 0.0;
 
 	@NotNull(message = "Charging priority is required")
@@ -51,6 +54,14 @@ public class StorageRequest {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	public Long getOwnerId() {
+		return ownerId;
+	}
+
+	public void setOwnerId(Long ownerId) {
+		this.ownerId = ownerId;
 	}
 
 	public boolean isActive() {
@@ -101,10 +112,19 @@ public class StorageRequest {
 		this.consumingPriority = consumingPriority;
 	}
 
+	/**
+	 * Converts this StorageRequest object into a Storage entity object.
+	 * Only for new Storages. If you want to update a Storage, refer directly to the fields of the StorageRequest.
+	 *
+	 * @return a new Storage entity, only for creating new Storages.
+	 */
 	public Storage toEntity() {
 		Storage storage = new Storage();
 		storage.setName(name);
 		storage.setCapacity(capacity);
+		storage.setCurrentCharge(currentCharge);
+		storage.setChargingPriority(chargingPriority);
+		storage.setConsumingPriority(consumingPriority);
 		return storage;
 	}
 }

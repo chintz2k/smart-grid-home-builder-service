@@ -12,10 +12,12 @@ import jakarta.validation.constraints.NotNull;
 @ValidProducerType
 public class ProducerRequest {
 
-	private Long id;
+	private Long id = null;
 
 	@NotBlank(message = "name is required")
 	private String name;
+
+	private Long ownerId = null;
 
 	private boolean active = false;
 
@@ -58,6 +60,14 @@ public class ProducerRequest {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	public Long getOwnerId() {
+		return ownerId;
+	}
+
+	public void setOwnerId(Long ownerId) {
+		this.ownerId = ownerId;
 	}
 
 	public boolean isActive() {
@@ -178,11 +188,15 @@ public class ProducerRequest {
 		updateRenewableStatus();
 	}
 
+	/**
+	 * Converts this ProducerRequest object into a Producer entity object.
+	 * Only for new Producers. If you want to update a Producer, refer directly to the fields of the ProducerRequest.
+	 *
+	 * @return a new Producer entity, only for creating new Producers.
+	 */
 	public Producer toEntity() {
 		Producer producer = new Producer();
 		producer.setName(name);
-		producer.setActive(active);
-		producer.setArchived(archived);
 		producer.setPowerProduction(powerProduction);
 		producer.setSolarPower(solarPower);
 		producer.setWindPower(windPower);

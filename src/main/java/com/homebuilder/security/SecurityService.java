@@ -1,5 +1,9 @@
 package com.homebuilder.security;
 
+import com.homebuilder.entity.Device;
+import com.homebuilder.entity.Room;
+import com.homebuilder.entity.SmartConsumerProgram;
+import com.homebuilder.entity.SmartConsumerTimeslot;
 import com.homebuilder.exception.UnauthorizedAccessException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -48,7 +52,7 @@ public class SecurityService {
 		throw new UnauthorizedAccessException("Invalid user ID in authentication context");
 	}
 
-	public boolean isCommercialUser() {
+	public boolean isCurrentUserACommercialUser() {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		if (authentication == null || authentication.getPrincipal() == null) {
 			throw new UnauthorizedAccessException("User is not authenticated");
@@ -58,6 +62,56 @@ public class SecurityService {
 			return jwtUtil.isCommercial(authentication.getCredentials().toString());
 		}
 
-		throw new UnauthorizedAccessException("Invalid user ID in authentication context");
+		return false;
+	}
+
+	public String getCurrentUserRole() {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		if (authentication == null || authentication.getPrincipal() == null) {
+			throw new UnauthorizedAccessException("User is not authenticated");
+		}
+
+		if (authentication instanceof UsernamePasswordAuthenticationToken) {
+			String token = authentication.getCredentials().toString();
+			return jwtUtil.extractRole(token);
+		}
+
+		throw new UnauthorizedAccessException("Invalid authentication context, cannot extract role");
+	}
+
+	public boolean isCurrentUserAdminOrSystem() {
+		return getCurrentUserRole().equals("ROLE_ADMIN") || getCurrentUserRole().equals("ROLE_SYSTEM");
+	}
+
+	public <T extends Device> boolean canAccessDevice(T device) {
+		Long userId = getCurrentUserId();
+		if (!device.getUserId().equals(userId)) {
+			return isCurrentUserAdminOrSystem();
+		}
+		return true;
+	}
+
+	public boolean canAccessRoom(Room room) {
+		Long userId = getCurrentUserId();
+		if (!room.getUserId().equals(userId)) {
+			return isCurrentUserAdminOrSystem();
+		}
+		return true;
+	}
+
+	public boolean canAccessProgram(SmartConsumerProgram program) {
+		Long userId = getCurrentUserId();
+		if (!program.getUserId().equals(userId)) {
+			return isCurrentUserAdminOrSystem();
+		}
+		return true;
+	}
+
+	public boolean canAccessTimeslot(SmartConsumerTimeslot timeslot) {
+		Long userId = getCurrentUserId();
+		if (!timeslot.getUserId().equals(userId)) {
+			return isCurrentUserAdminOrSystem();
+		}
+		return true;
 	}
 }

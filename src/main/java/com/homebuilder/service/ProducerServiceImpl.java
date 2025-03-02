@@ -2,16 +2,24 @@ package com.homebuilder.service;
 
 import com.homebuilder.dto.ProducerRequest;
 import com.homebuilder.entity.Producer;
+import com.homebuilder.exception.CreateDeviceFailedException;
 import com.homebuilder.exception.DeviceNotFoundException;
 import com.homebuilder.exception.UnauthorizedAccessException;
 import com.homebuilder.repository.ProducerRepository;
 import com.homebuilder.security.SecurityService;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author André Heinen
@@ -19,109 +27,172 @@ import java.util.Map;
 @Service
 public class ProducerServiceImpl implements ProducerService {
 
+	private static final Logger logger = LoggerFactory.getLogger(ProducerServiceImpl.class);
+
 	private final ProducerRepository producerRepository;
 
 	private final SecurityService securityService;
 
+	private final KafkaTemplate<String, String> kafkaTemplate;
+
 	@Autowired
-	public ProducerServiceImpl(ProducerRepository producerRepository, SecurityService securityService) {
+	public ProducerServiceImpl(ProducerRepository producerRepository, SecurityService securityService, KafkaTemplate<String, String> kafkaTemplate) {
 		this.producerRepository = producerRepository;
 		this.securityService = securityService;
+		this.kafkaTemplate = kafkaTemplate;
 	}
 
 	@Override
-	public Producer createProducerForUser(@Valid ProducerRequest request) {
-		Long userId = securityService.getCurrentUserId();
+	public Producer createProducer(@Valid ProducerRequest request) {
 		Producer producer = request.toEntity();
-		producer.setUserId(userId);
+		if (securityService.isCurrentUserAdminOrSystem()) {
+			if (request.getOwnerId() == null) {
+				throw new CreateDeviceFailedException("Owner ID must be provided when creating Producer as System User");
+			} else {
+				producer.setUserId(request.getOwnerId());
+			}
+		} else {
+			producer.setUserId(securityService.getCurrentUserId());
+		}
 		producerRepository.save(producer);
 		return producer;
-	}
-
-	@Override
-	public List<Producer> getAllProducersFromUser() {
-		Long userId = securityService.getCurrentUserId();
-		List<Producer> producerList = producerRepository.findByUserId(userId);
-		if (producerList.isEmpty()) {
-			throw new DeviceNotFoundException("No Producers found for User with ID " + userId);
-		}
-		return producerList;
-	}
-
-	@Override
-	public Producer getProducerByIdFromUser(Long producerId) {
-		Long userId = securityService.getCurrentUserId();
-		Producer producer = producerRepository.findById(producerId).orElseThrow(() -> new DeviceNotFoundException("Producer with ID " + producerId + " not found"));
-		if (!producer.getUserId().equals(userId)) {
-			throw new UnauthorizedAccessException("Unauthorized access to producer with ID " + producerId);
-		}
-		return producer;
-	}
-
-	@Override
-	public Producer updateProducerForUser(Long existingProducerId, @Valid ProducerRequest request) {
-		Long userId = securityService.getCurrentUserId();
-		Producer existingProducer = getProducerByIdFromUser(existingProducerId);
-		if (!existingProducer.getUserId().equals(userId)) {
-			throw new UnauthorizedAccessException("Unauthorized access to producer with ID " + existingProducerId);
-		}
-		existingProducer.setName(request.getName());
-		existingProducer.setActive(request.isActive());
-		existingProducer.setArchived(request.isArchived());
-		existingProducer.setPowerProduction(request.getPowerProduction());
-		producerRepository.save(existingProducer);
-		return existingProducer;
-	}
-
-	@Override
-	public Map<String, String> archiveProducerForUser(Long producerId) {
-		Long userId = securityService.getCurrentUserId();
-		Producer producer = getProducerByIdFromUser(producerId);
-		producer.setArchived(true);
-		if (!producer.getUserId().equals(userId)) {
-			throw new UnauthorizedAccessException("Unauthorized access to producer with ID " + producerId);
-		}
-		Map<String, String> response = Map.of(
-				"message", "Successfully archived Producer with ID " + producerId,
-				"id", producerId.toString()
-		);
-		producerRepository.save(producer);
-		return response;
-	}
-
-	@Override
-	public Map<String, String> deleteProducerForUser(Long producerId) {
-		Long userId = securityService.getCurrentUserId();
-		Producer producer = getProducerByIdFromUser(producerId);
-		if (!producer.getUserId().equals(userId)) {
-			throw new UnauthorizedAccessException("Unauthorized access to producer with ID " + producerId);
-		}
-		Map<String, String> response = Map.of(
-				"message", "Successfully deleted Producer with ID " + producerId,
-				"id", producerId.toString()
-		);
-		producerRepository.delete(producer);
-		return response;
 	}
 
 	@Override
 	public List<Producer> getAllProducers() {
-		return producerRepository.findAll();
+		if (securityService.isCurrentUserAdminOrSystem()) {
+			return producerRepository.findAll(PageRequest.of(0, 1000)).getContent();
+		}
+		Long userId = securityService.getCurrentUserId();
+		return producerRepository.findByUserId(userId);
+	}
+
+	@Override
+	public List<Producer> getAllProducersByOwner(Long ownerId) {
+		if (securityService.isCurrentUserAdminOrSystem()) {
+			return producerRepository.findByUserId(ownerId);
+		} else {
+			throw new UnauthorizedAccessException("Unauthorized access to Producers for Owner with ID " + ownerId);
+		}
 	}
 
 	@Override
 	public Producer getProducerById(Long producerId) {
-		return producerRepository.findById(producerId).orElseThrow(() -> new DeviceNotFoundException("Producer with ID " + producerId + " not found"));
+		Producer producer = producerRepository.findById(producerId).orElse(null);
+		if (producer != null) {
+			if (securityService.canAccessDevice(producer)) {
+				return producer;
+			} else {
+				throw new UnauthorizedAccessException("Unauthorized access to Producer with ID " + producerId);
+			}
+		}
+		return null;
 	}
 
 	@Override
-	public Producer updateProducer(Long producerId, @Valid Producer request) {
-		Producer producer = getProducerById(producerId);
-		producer.setName(request.getName());
-		producer.setActive(request.isActive());
-		producer.setArchived(request.isArchived());
-		producer.setPowerProduction(request.getPowerProduction());
-		producerRepository.save(producer);
-		return producer;
+	public Producer updateProducer(@Valid ProducerRequest request) {
+		if (request.getId() == null) {
+			throw new CreateDeviceFailedException("Producer ID must be provided when updating Producer");
+		}
+		Producer producer = producerRepository.findById(request.getId()).orElse(null);
+		if (producer != null) {
+			if (securityService.canAccessDevice(producer)) {
+				boolean changed = false;
+				if (!Objects.equals(request.getName(), producer.getName())) {
+					producer.setName(request.getName());
+					changed = true;
+				}
+				if (request.getPowerProduction() != producer.getPowerProduction()) {
+					if (producer.isActive()) {
+						setActive(producer, false);
+					}
+					producer.setPowerProduction(request.getPowerProduction());
+					changed = true;
+				}
+				if (changed) {
+					producerRepository.save(producer);
+					return producer;
+				}
+				throw new CreateDeviceFailedException("No changes detected in Producer");
+			}
+			throw new UnauthorizedAccessException("Unauthorized access to Producer with ID " + request.getId());
+		}
+		return null;
+	}
+
+	@Override
+	public Map<String, String> setActive(Producer producer, boolean active) {
+		if (producer != null) {
+			if (securityService.canAccessDevice(producer)) {
+				if (producer.isArchived()) {
+					throw new CreateDeviceFailedException("Producer with ID " + producer.getId() + " is archived and cannot be activated or deactivated");
+				}
+				if (producer.isActive() && active) {
+					throw new CreateDeviceFailedException("Producer with ID " + producer.getId() + " is already active");
+				}
+				if (!producer.isActive() && !active) {
+					throw new CreateDeviceFailedException("Producer with ID " + producer.getId() + " is already inactive");
+				}
+				producer.setActive(active);
+				producerRepository.save(producer);
+				String event = String.format(
+						Locale.ENGLISH,
+						"{\"deviceId\": %d, \"ownerId\": %d, \"commercial\": %b, \"active\": %b, \"powerType\": \"%s\", \"renewable\": %b, \"powerProduction\": %f, \"timestamp\": \"%s\"}",
+						producer.getId(), producer.getUserId(), securityService.isCurrentUserACommercialUser(), active, producer.getPowerType(), producer.isRenewable(), producer.getPowerProduction(), Instant.now());
+				kafkaTemplate.send("producer-events", event).whenComplete((result, exception) -> {
+					if (exception != null) {
+						logger.error("Fehler beim Senden des Events: {}", exception.getMessage());
+					}
+				});
+				return Map.of(
+						"message", "Successfully updated Producer with ID " + producer.getId(),
+						"id", producer.getId().toString(),
+						"active", producer.isActive() ? "true" : "false"
+				);
+			}
+		}
+		throw new DeviceNotFoundException("Producer not found");
+	}
+
+	@Override
+	public Map<String, String> archiveProducer(Long producerId) {
+		Producer producer = producerRepository.findById(producerId).orElse(null);
+		if (producer != null) {
+			if (securityService.canAccessDevice(producer)) {
+				if (!producer.isArchived()) {
+					producer.setArchived(true);
+					if (producer.isActive()) {
+						setActive(producer, false);
+					}
+					Map<String, String> response = Map.of(
+							"message", "Successfully archived Producer with ID " + producerId,
+							"id", producerId.toString()
+					);
+					producerRepository.save(producer);
+					return response;
+				} else {
+					throw new CreateDeviceFailedException("Producer with ID " + producerId + " is already archived");
+				}
+			}
+			throw new UnauthorizedAccessException("Unauthorized access to Producer with ID " + producerId);
+		}
+		throw new DeviceNotFoundException("Producer with ID " + producerId + " not found");
+	}
+
+	@Override
+	public Map<String, String> deleteProducer(Long producerId) {
+		Producer producer = producerRepository.findById(producerId).orElse(null);
+		if (producer != null) {
+			if (securityService.canAccessDevice(producer)) {
+				Map<String, String> response = Map.of(
+						"message", "Successfully deleted Producer with ID " + producerId,
+						"id", producerId.toString()
+				);
+				producerRepository.delete(producer);
+				return response;
+			}
+			throw new UnauthorizedAccessException("Unauthorized access to Producer with ID " + producerId);
+		}
+		return null;
 	}
 }

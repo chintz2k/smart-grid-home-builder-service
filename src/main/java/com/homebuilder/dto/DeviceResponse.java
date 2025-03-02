@@ -1,6 +1,7 @@
 package com.homebuilder.dto;
 
 import com.homebuilder.entity.Device;
+import com.homebuilder.exception.DeviceNotFoundException;
 
 /**
  * @author André Heinen
@@ -13,6 +14,9 @@ public class DeviceResponse {
 	private final boolean archived;
 
 	public DeviceResponse(Device device) {
+		if (device == null) {
+			throw new DeviceNotFoundException("Device not found");
+		}
 		this.id = device.getId();
 		this.name = device.getName();
 		this.active = device.isActive();

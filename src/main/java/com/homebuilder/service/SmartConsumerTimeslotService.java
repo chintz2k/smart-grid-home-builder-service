@@ -11,12 +11,11 @@ import java.util.Map;
  */
 public interface SmartConsumerTimeslotService {
 
-	SmartConsumerTimeslot createSmartConsumerTimeslotForUser(SmartConsumerTimeslotRequest request);
-	List<SmartConsumerTimeslot> getAllSmartConsumerTimeslotsFromUser();
-	SmartConsumerTimeslot getSmartConsumerTimeslotByIdFromUser(Long smartConsumerTimeslotId);
-	SmartConsumerTimeslot updateSmartConsumerTimeslotForUser(Long smartConsumerTimeslotId, SmartConsumerTimeslotRequest request);
-	Map<String, String> deleteSmartConsumerTimeslotForUser(Long smartConsumerTimeslotId);
-
+	SmartConsumerTimeslot createSmartConsumerTimeslot(SmartConsumerTimeslotRequest request);
 	List<SmartConsumerTimeslot> getAllSmartConsumerTimeslots();
+	List<SmartConsumerTimeslot> getAllSmartConsumerTimeslotsByOwner(Long ownerId);
 	SmartConsumerTimeslot getSmartConsumerTimeslotById(Long smartConsumerTimeslotId);
+	SmartConsumerTimeslot updateSmartConsumerTimeslot(SmartConsumerTimeslotRequest request);
+	Map<String, String> deleteSmartConsumerTimeslot(Long smartConsumerTimeslotId);
+
 }

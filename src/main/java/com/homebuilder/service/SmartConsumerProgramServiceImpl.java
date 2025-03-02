@@ -3,6 +3,7 @@ package com.homebuilder.service;
 import com.homebuilder.dto.SmartConsumerProgramRequest;
 import com.homebuilder.entity.SmartConsumer;
 import com.homebuilder.entity.SmartConsumerProgram;
+import com.homebuilder.exception.CreateDeviceFailedException;
 import com.homebuilder.exception.DeviceNotFoundException;
 import com.homebuilder.exception.UnauthorizedAccessException;
 import com.homebuilder.repository.SmartConsumerProgramRepository;
@@ -10,10 +11,12 @@ import com.homebuilder.repository.SmartConsumerRepository;
 import com.homebuilder.security.SecurityService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author André Heinen
@@ -24,103 +27,136 @@ public class SmartConsumerProgramServiceImpl implements SmartConsumerProgramServ
 	private final SmartConsumerProgramRepository smartConsumerProgramRepository;
 	private final SmartConsumerRepository smartConsumerRepository;
 
-	private final SmartConsumerService smartConsumerService;
-
 	private final SecurityService securityService;
 
 	@Autowired
-	public SmartConsumerProgramServiceImpl(SmartConsumerProgramRepository smartConsumerProgramRepository, SmartConsumerRepository smartConsumerRepository, SmartConsumerService smartConsumerService, SecurityService securityService) {
+	public SmartConsumerProgramServiceImpl(SmartConsumerProgramRepository smartConsumerProgramRepository, SmartConsumerRepository smartConsumerRepository, SecurityService securityService) {
 		this.smartConsumerProgramRepository = smartConsumerProgramRepository;
 		this.smartConsumerRepository = smartConsumerRepository;
-		this.smartConsumerService = smartConsumerService;
 		this.securityService = securityService;
 	}
 
 	@Override
-	public SmartConsumerProgram createSmartConsumerProgramForUser(@Valid SmartConsumerProgramRequest request) {
-		Long userId = securityService.getCurrentUserId();
+	public SmartConsumerProgram createSmartConsumerProgram(@Valid SmartConsumerProgramRequest request) {
 		SmartConsumerProgram smartConsumerProgram = request.toEntity();
-		smartConsumerProgram.setUserId(userId);
-		SmartConsumer smartConsumer = smartConsumerService.getSmartConsumerByIdFromUser(request.getSmartConsumerId());
-		smartConsumerProgram.setSmartConsumer(smartConsumer);
-		smartConsumer.getProgramList().add(smartConsumerProgram);
-		smartConsumerProgramRepository.save(smartConsumerProgram);
-		smartConsumerRepository.save(smartConsumer);
-		return smartConsumerProgram;
-	}
-
-	@Override
-	public List<SmartConsumerProgram> getAllSmartConsumerProgramsFromUser() {
-		Long userId = securityService.getCurrentUserId();
-		List<SmartConsumerProgram> smartConsumerProgramList = smartConsumerProgramRepository.findByUserId(userId);
-		if (smartConsumerProgramList.isEmpty()) {
-			throw new DeviceNotFoundException("No SmartConsumerPrograms found for User with ID " + userId);
+		if (securityService.isCurrentUserAdminOrSystem()) {
+			if (request.getOwnerId() == null) {
+				throw new CreateDeviceFailedException("Owner ID must be provided when creating SmartConsumerProgram as System User");
+			} else {
+				smartConsumerProgram.setUserId(request.getOwnerId());
+			}
+		} else {
+			smartConsumerProgram.setUserId(securityService.getCurrentUserId());
 		}
-		return smartConsumerProgramList;
-	}
-
-	@Override
-	public SmartConsumerProgram getSmartConsumerProgramByIdFromUser(Long smartConsumerProgramId) {
-		Long userId = securityService.getCurrentUserId();
-		SmartConsumerProgram smartConsumerProgram = smartConsumerProgramRepository.findById(smartConsumerProgramId).orElseThrow(() -> new DeviceNotFoundException("SmartConsumerProgram with ID " + smartConsumerProgramId + " not found"));
-		if (!smartConsumerProgram.getUserId().equals(userId)) {
-			throw new UnauthorizedAccessException("Unauthorized access to smartConsumerProgram with ID " + smartConsumerProgramId);
+		SmartConsumer smartConsumer = smartConsumerRepository.findById(request.getSmartConsumerId()).orElse(null);
+		if (smartConsumer != null) {
+			if (securityService.canAccessDevice(smartConsumer)) {
+				smartConsumerProgram.setSmartConsumer(smartConsumer);
+				smartConsumer.getProgramList().add(smartConsumerProgram);
+				smartConsumerProgramRepository.save(smartConsumerProgram);
+				smartConsumerRepository.save(smartConsumer);
+				return smartConsumerProgram;
+			}
+			throw new UnauthorizedAccessException("Unauthorized access to SmartConsumer with ID " + request.getSmartConsumerId());
 		}
-		return smartConsumerProgram;
-	}
-
-	@Override
-	public SmartConsumerProgram updateSmartConsumerProgramForUser(Long existingProgramId, @Valid SmartConsumerProgramRequest request) {
-		Long userId = securityService.getCurrentUserId();
-		SmartConsumerProgram existingProgram = getSmartConsumerProgramByIdFromUser(existingProgramId);
-		if (!existingProgram.getUserId().equals(userId)) {
-			throw new UnauthorizedAccessException("Unauthorized access to SmartConsumerProgram with ID " + existingProgramId);
-		}
-		existingProgram.setName(request.getName());
-		existingProgram.setDurationInSeconds(request.getDurationInSeconds());
-		existingProgram.setPowerConsumption(request.getPowerConsumption());
-		existingProgram.setArchived(request.isArchived());
-		smartConsumerProgramRepository.save(existingProgram);
-		return existingProgram;
-	}
-
-	@Override
-	public Map<String, String> archiveSmartConsumerProgramForUser(Long smartConsumerProgramId) {
-		Long userId = securityService.getCurrentUserId();
-		SmartConsumerProgram smartConsumerProgram = getSmartConsumerProgramByIdFromUser(smartConsumerProgramId);
-		if (!smartConsumerProgram.getUserId().equals(userId)) {
-			throw new UnauthorizedAccessException("Unauthorized access to SmartConsumerProgram with ID " + smartConsumerProgramId);
-		}
-		Map<String, String> response = Map.of(
-				"message", "Successfully archived SmartConsumerProgram with ID " + smartConsumerProgramId,
-				"id", smartConsumerProgramId.toString()
-		);
-		smartConsumerProgramRepository.save(smartConsumerProgram);
-		return response;
-	}
-
-	@Override
-	public Map<String, String> deleteSmartConsumerProgramForUser(Long smartConsumerProgramId) {
-		Long userId = securityService.getCurrentUserId();
-		SmartConsumerProgram smartConsumerProgram = getSmartConsumerProgramByIdFromUser(smartConsumerProgramId);
-		if (!smartConsumerProgram.getUserId().equals(userId)) {
-			throw new UnauthorizedAccessException("Unauthorized access to SmartConsumerProgram with ID " + smartConsumerProgramId);
-		}
-		Map<String, String> response = Map.of(
-				"message", "Successfully deleted SmartConsumerProgram with ID " + smartConsumerProgramId,
-				"id", smartConsumerProgramId.toString()
-		);
-		smartConsumerProgramRepository.delete(smartConsumerProgram);
-		return response;
+		throw new DeviceNotFoundException("SmartConsumer with ID " + request.getSmartConsumerId() + " not found");
 	}
 
 	@Override
 	public List<SmartConsumerProgram> getAllSmartConsumerPrograms() {
-		return smartConsumerProgramRepository.findAll();
+		if (securityService.isCurrentUserAdminOrSystem()) {
+			return smartConsumerProgramRepository.findAll(PageRequest.of(0, 1000)).getContent();
+		}
+		Long userId = securityService.getCurrentUserId();
+		return smartConsumerProgramRepository.findByUserId(userId);
+	}
+
+	@Override
+	public List<SmartConsumerProgram> getAllSmartConsumerProgramsByOwner(Long ownerId) {
+		if (securityService.isCurrentUserAdminOrSystem()) {
+			return smartConsumerProgramRepository.findByUserId(ownerId);
+		} else {
+			throw new UnauthorizedAccessException("Unauthorized access to SmartConsumerPrograms for Owner with ID " + ownerId);
+		}
 	}
 
 	@Override
 	public SmartConsumerProgram getSmartConsumerProgramById(Long smartConsumerProgramId) {
-		return smartConsumerProgramRepository.findById(smartConsumerProgramId).orElseThrow(() -> new DeviceNotFoundException("SmartConsumerProgram with ID " + smartConsumerProgramId + " not found"));
+		SmartConsumerProgram smartConsumerProgram = smartConsumerProgramRepository.findById(smartConsumerProgramId).orElse(null);
+		if (smartConsumerProgram != null) {
+			if (securityService.canAccessProgram(smartConsumerProgram)) {
+				return smartConsumerProgram;
+			} else {
+				throw new UnauthorizedAccessException("Unauthorized access to SmartConsumerProgram with ID " + smartConsumerProgramId);
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public SmartConsumerProgram updateSmartConsumerProgram(@Valid SmartConsumerProgramRequest request) {
+		if (request.getId() == null) {
+			throw new CreateDeviceFailedException("SmartConsumerProgram ID must be provided when updating SmartConsumerProgram");
+		}
+		SmartConsumerProgram program = smartConsumerProgramRepository.findById(request.getId()).orElse(null);
+		if (program != null) {
+			if (securityService.canAccessProgram(program)) {
+				SmartConsumer smartConsumer = smartConsumerRepository.findById(request.getSmartConsumerId()).orElse(null);
+				if (smartConsumer != null) {
+					if (securityService.canAccessDevice(smartConsumer)) {
+						program.setName(request.getName());
+						program.setDurationInSeconds(request.getDurationInSeconds());
+						program.setPowerConsumption(request.getPowerConsumption());
+						if (!Objects.equals(program.getName(), request.getName()) || program.getDurationInSeconds() != request.getDurationInSeconds() || program.getPowerConsumption() != request.getPowerConsumption()) {
+							smartConsumerProgramRepository.save(program);
+							return program;
+						}
+						throw new CreateDeviceFailedException("No changes detected in SmartConsumerProgram");
+					}
+					throw new UnauthorizedAccessException("Unauthorized access to SmartConsumer with ID " + request.getSmartConsumerId());
+				}
+				throw new DeviceNotFoundException("SmartConsumer with ID " + request.getSmartConsumerId() + " not found");
+			}
+			throw new UnauthorizedAccessException("Unauthorized access to SmartConsumerProgram with ID " + request.getId());
+		}
+		throw new DeviceNotFoundException("SmartConsumerProgram with ID " + request.getId() + " not found");
+	}
+
+	@Override
+	public Map<String, String> archiveSmartConsumerProgram(Long smartConsumerProgramId) {
+		SmartConsumerProgram program = smartConsumerProgramRepository.findById(smartConsumerProgramId).orElse(null);
+		if (program != null) {
+			if (securityService.canAccessProgram(program)) {
+				if (!program.isArchived()) {
+					program.setArchived(true);
+					Map<String, String> response = Map.of(
+							"message", "Successfully archived SmartConsumerProgram with ID " + smartConsumerProgramId,
+							"id", smartConsumerProgramId.toString()
+					);
+					smartConsumerProgramRepository.save(program);
+					return response;
+				}
+				throw new CreateDeviceFailedException("SmartConsumerProgram with ID " + smartConsumerProgramId + " is already archived");
+			}
+			throw new UnauthorizedAccessException("Unauthorized access to SmartConsumerProgram with ID " + smartConsumerProgramId);
+		}
+		throw new DeviceNotFoundException("SmartConsumerProgram with ID " + smartConsumerProgramId + " not found");
+	}
+
+	@Override
+	public Map<String, String> deleteSmartConsumerProgram(Long smartConsumerProgramId) {
+		SmartConsumerProgram program = smartConsumerProgramRepository.findById(smartConsumerProgramId).orElse(null);
+		if (program != null) {
+			if (securityService.canAccessProgram(program)) {
+				Map<String, String> response = Map.of(
+						"message", "Successfully deleted SmartConsumerProgram with ID " + smartConsumerProgramId,
+						"id", smartConsumerProgramId.toString()
+				);
+				smartConsumerProgramRepository.delete(program);
+				return response;
+			}
+			throw new UnauthorizedAccessException("Unauthorized access to SmartConsumerProgram with ID " + smartConsumerProgramId);
+		}
+		throw new DeviceNotFoundException("SmartConsumerProgram with ID " + smartConsumerProgramId + " not found");
 	}
 }

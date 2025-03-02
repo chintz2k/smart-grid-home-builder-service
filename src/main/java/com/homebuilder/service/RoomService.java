@@ -11,15 +11,14 @@ import java.util.Map;
  */
 public interface RoomService {
 
-	Room createRoomForUser(RoomRequest request);
-	List<Room> getAllRoomsFromUser();
-	Room getRoomByIdFromUser(Long roomId);
-	Room updateRoomForUser(Long roomId, RoomRequest request);
-	Map<String, String> deleteRoomForUser(Long roomId);
-	Map<String, String> assignDeviceToRoomForUser(Long roomId, Long deviceId);
-	Map<String, String> removeDeviceFromRoomForUser(Long roomId, Long deviceId);
-
+	Room createRoom(RoomRequest request);
 	List<Room> getAllRooms();
+	List<Room> getAllRoomsByOwner(Long ownerId);
 	Room getRoomById(Long roomId);
+	Room updateRoom(RoomRequest request);
+	Map<String, String> deleteRoom(Long roomId);
+	Map<String, String> assignDeviceToRoom(Long roomId, Long deviceId);
+	Map<String, String> removeDeviceFromRoom(Long roomId, Long deviceId);
+
 
 }

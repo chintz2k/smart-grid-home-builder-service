@@ -11,15 +11,13 @@ import java.util.Map;
  */
 public interface StorageService {
 
-	Storage createStorageForUser(StorageRequest request);
-	List<Storage> getAllStoragesFromUser();
-	Storage getStorageByIdFromUser(Long storageId);
-	Storage updateStorageForUser(Long storageId, StorageRequest request);
-	Map<String, String> archiveStorageForUser(Long storageId);
-	Map<String, String> deleteStorageForUser(Long storageId);
-
+	Storage createStorage(StorageRequest request);
 	List<Storage> getAllStorages();
+	List<Storage> getAllStoragesByOwner(Long ownerId);
 	Storage getStorageById(Long storageId);
-	Storage updateStorage(Long storageId, Storage request);
+	Storage updateStorage(StorageRequest request);
+	Map<String, String> setActive(Storage storage, boolean active);
+	Map<String, String> archiveStorage(Long storageId);
+	Map<String, String> deleteStorage(Long storageId);
 
 }

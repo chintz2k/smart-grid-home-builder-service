@@ -10,10 +10,12 @@ import jakarta.validation.constraints.NotNull;
  */
 public class SmartConsumerRequest {
 
-	private Long id;
+	private Long id = null;
 
 	@NotBlank(message = "name is required")
 	private String name;
+
+	private Long ownerId = null;
 
 	@NotNull(message = "Power consumption is required")
 	@DecimalMin(value = "0.001", message = "Power consumption must be at least 0.001")
@@ -43,6 +45,14 @@ public class SmartConsumerRequest {
 		this.name = name;
 	}
 
+	public Long getOwnerId() {
+		return ownerId;
+	}
+
+	public void setOwnerId(Long ownerId) {
+		this.ownerId = ownerId;
+	}
+
 	public double getPowerConsumption() {
 		return powerConsumption;
 	}
@@ -67,12 +77,16 @@ public class SmartConsumerRequest {
 		this.archived = archived;
 	}
 
+	/**
+	 * Converts this SmartConsumerRequest object into a SmartConsumer entity object.
+	 * Only for new SmartConsumers. If you want to update a SmartConsumer, refer directly to the fields of the SmartConsumerRequest.
+	 *
+	 * @return a new SmartConsumer entity, only for creating new SmartConsumers.
+	 */
 	public SmartConsumer toEntity() {
 		SmartConsumer smartConsumer = new SmartConsumer();
 		smartConsumer.setName(name);
 		smartConsumer.setPowerConsumption(powerConsumption);
-		smartConsumer.setActive(active);
-		smartConsumer.setArchived(archived);
 		return smartConsumer;
 	}
 }

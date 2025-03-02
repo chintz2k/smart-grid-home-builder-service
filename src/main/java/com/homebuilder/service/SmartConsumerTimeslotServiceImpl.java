@@ -7,11 +7,13 @@ import com.homebuilder.entity.SmartConsumerTimeslot;
 import com.homebuilder.exception.DeviceNotFoundException;
 import com.homebuilder.exception.TimeslotOverlapException;
 import com.homebuilder.exception.UnauthorizedAccessException;
+import com.homebuilder.repository.SmartConsumerProgramRepository;
 import com.homebuilder.repository.SmartConsumerRepository;
 import com.homebuilder.repository.SmartConsumerTimeslotRepository;
 import com.homebuilder.security.SecurityService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -24,101 +26,139 @@ import java.util.Map;
 public class SmartConsumerTimeslotServiceImpl implements SmartConsumerTimeslotService {
 
 	private final SmartConsumerTimeslotRepository smartConsumerTimeslotRepository;
+	private final SmartConsumerProgramRepository smartConsumerProgramRepository;
 	private final SmartConsumerRepository smartConsumerRepository;
-
-	private final SmartConsumerService smartConsumerService;
-	private final SmartConsumerProgramService smartConsumerProgramService;
 
 	private final SecurityService securityService;
 
 	@Autowired
-	public SmartConsumerTimeslotServiceImpl(SmartConsumerTimeslotRepository smartConsumerTimeslotRepository, SmartConsumerRepository smartConsumerRepository, SmartConsumerService smartConsumerService, SmartConsumerProgramService smartConsumerProgramService, SecurityService securityService) {
+	public SmartConsumerTimeslotServiceImpl(SmartConsumerTimeslotRepository smartConsumerTimeslotRepository, SmartConsumerProgramRepository smartConsumerProgramRepository, SmartConsumerRepository smartConsumerRepository, SecurityService securityService) {
 		this.smartConsumerTimeslotRepository = smartConsumerTimeslotRepository;
+		this.smartConsumerProgramRepository = smartConsumerProgramRepository;
 		this.smartConsumerRepository = smartConsumerRepository;
-		this.smartConsumerService = smartConsumerService;
-		this.smartConsumerProgramService = smartConsumerProgramService;
 		this.securityService = securityService;
 	}
 
 	@Override
-	public SmartConsumerTimeslot createSmartConsumerTimeslotForUser(@Valid SmartConsumerTimeslotRequest request) {
-		Long userId = securityService.getCurrentUserId();
-		SmartConsumerTimeslot smartConsumerTimeslot = request.toEntity();
-		smartConsumerTimeslot.setUserId(userId);
-		SmartConsumerProgram program = smartConsumerProgramService.getSmartConsumerProgramById(request.getSmartConsumerProgramId());
-		smartConsumerTimeslot.setSmartConsumerProgram(program);
-		int durationInSeconds = program.getDurationInSeconds();
-		smartConsumerTimeslot.setEndTime(smartConsumerTimeslot.getStartTime().plusSeconds(durationInSeconds));
-		SmartConsumer smartConsumer = smartConsumerService.getSmartConsumerByIdFromUser(request.getSmartConsumerId());
-		smartConsumerTimeslot.setSmartConsumer(smartConsumer);
-		List<SmartConsumerTimeslot> overlappingTimeslots = smartConsumerTimeslotRepository.findBySmartConsumerAndStartTimeLessThanAndEndTimeGreaterThan(smartConsumer, smartConsumerTimeslot.getEndTime(), smartConsumerTimeslot.getStartTime());
-		if (!overlappingTimeslots.isEmpty()) {
-			throw new TimeslotOverlapException("The timeslot overlaps with existing timeslots for this SmartConsumer.", overlappingTimeslots);
+	public SmartConsumerTimeslot createSmartConsumerTimeslot(@Valid SmartConsumerTimeslotRequest request) {
+		SmartConsumerTimeslot timeslot = request.toEntity();
+		if (securityService.isCurrentUserAdminOrSystem()) {
+			if (request.getOwnerId() == null) {
+				throw new DeviceNotFoundException("Owner ID must be provided when creating SmartConsumerTimeslot as System User");
+			} else {
+				timeslot.setUserId(request.getOwnerId());
+			}
+		} else {
+			timeslot.setUserId(securityService.getCurrentUserId());
 		}
-		smartConsumer.getTimeslotList().add(smartConsumerTimeslot);
-		smartConsumerTimeslotRepository.save(smartConsumerTimeslot);
-		smartConsumerRepository.save(smartConsumer);
-		return smartConsumerTimeslot;
-	}
-
-	@Override
-	public List<SmartConsumerTimeslot> getAllSmartConsumerTimeslotsFromUser() {
-		Long userId = securityService.getCurrentUserId();
-		List<SmartConsumerTimeslot> smartConsumerTimeslotList = smartConsumerTimeslotRepository.findByUserId(userId);
-		if (smartConsumerTimeslotList.isEmpty()) {
-			throw new DeviceNotFoundException("No SmartConsumerTimeslots found for User with ID " + userId);
+		SmartConsumer smartConsumer = smartConsumerRepository.findById(request.getSmartConsumerId()).orElse(null);
+		if (smartConsumer != null) {
+			if (securityService.canAccessDevice(smartConsumer)) {
+				SmartConsumerProgram program = smartConsumerProgramRepository.findById(request.getSmartConsumerProgramId()).orElse(null);
+				if (program != null) {
+					if (securityService.canAccessProgram(program)) {
+						timeslot.setSmartConsumerProgram(program);
+						timeslot.setStartTime(request.getStartTimeAsInstant());
+						int durationInSeconds = program.getDurationInSeconds();
+						timeslot.setEndTime(timeslot.getStartTime().plusSeconds(durationInSeconds));
+						timeslot.setSmartConsumer(smartConsumer);
+						List<SmartConsumerTimeslot> overlappingTimeslots = smartConsumerTimeslotRepository.findBySmartConsumerAndStartTimeLessThanAndEndTimeGreaterThan(smartConsumer, timeslot.getEndTime(), timeslot.getStartTime());
+						if (!overlappingTimeslots.isEmpty()) {
+							throw new TimeslotOverlapException("The timeslot overlaps with existing timeslots for this SmartConsumer.", overlappingTimeslots);
+						}
+						smartConsumer.getTimeslotList().add(timeslot);
+						smartConsumerTimeslotRepository.save(timeslot);
+						smartConsumerRepository.save(smartConsumer);
+						return timeslot;
+					}
+					throw new UnauthorizedAccessException("Unauthorized access to SmartConsumerProgram with ID " + request.getSmartConsumerProgramId());
+				}
+				throw new DeviceNotFoundException("SmartConsumerProgram with ID " + request.getSmartConsumerProgramId() + " not found");
+			}
+			throw new UnauthorizedAccessException("Unauthorized access to SmartConsumer with ID " + request.getSmartConsumerId());
 		}
-		return smartConsumerTimeslotList;
-	}
-
-	@Override
-	public SmartConsumerTimeslot getSmartConsumerTimeslotByIdFromUser(Long smartConsumerTimeslotId) {
-		Long userId = securityService.getCurrentUserId();
-		SmartConsumerTimeslot smartConsumerTimeslot = smartConsumerTimeslotRepository.findById(smartConsumerTimeslotId).orElseThrow(() -> new DeviceNotFoundException("SmartConsumerTimeslot with ID " + smartConsumerTimeslotId + " not found"));
-		if (!smartConsumerTimeslot.getUserId().equals(userId)) {
-			throw new UnauthorizedAccessException("Unauthorized access to smartConsumerTimeslot with ID " + smartConsumerTimeslotId);
-		}
-		return smartConsumerTimeslot;
-	}
-
-	@Override
-	public SmartConsumerTimeslot updateSmartConsumerTimeslotForUser(Long existingTimeslotId, @Valid SmartConsumerTimeslotRequest request) {
-		Long userId = securityService.getCurrentUserId();
-		SmartConsumerTimeslot existingTimeslot = getSmartConsumerTimeslotByIdFromUser(existingTimeslotId);
-		if (!existingTimeslot.getUserId().equals(userId)) {
-			throw new UnauthorizedAccessException("Unauthorized access to smartConsumerTimeslot with ID " + existingTimeslotId);
-		}
-		existingTimeslot.setStartTime(request.getStartTimeAsInstant());
-		SmartConsumerProgram program = smartConsumerProgramService.getSmartConsumerProgramById(request.getSmartConsumerProgramId());
-		int durationInSeconds = program.getDurationInSeconds();
-		existingTimeslot.setEndTime(existingTimeslot.getStartTime().plusSeconds(durationInSeconds));
-		existingTimeslot.setArchived(request.isArchived());
-		smartConsumerTimeslotRepository.save(existingTimeslot);
-		return existingTimeslot;
-	}
-
-	@Override
-	public Map<String, String> deleteSmartConsumerTimeslotForUser(Long smartConsumerTimeslotId) {
-		Long userId = securityService.getCurrentUserId();
-		SmartConsumerTimeslot smartConsumerTimeslot = getSmartConsumerTimeslotByIdFromUser(smartConsumerTimeslotId);
-		if (!smartConsumerTimeslot.getUserId().equals(userId)) {
-			throw new UnauthorizedAccessException("Unauthorized access to smartConsumerTimeslot with ID " + smartConsumerTimeslotId);
-		}
-		Map<String, String> response = Map.of(
-				"message", "Successfully deleted SmartConsumerProgram with ID " + smartConsumerTimeslotId,
-				"id", smartConsumerTimeslotId.toString()
-		);
-		smartConsumerTimeslotRepository.delete(smartConsumerTimeslot);
-		return response;
+		throw new DeviceNotFoundException("SmartConsumer with ID " + request.getSmartConsumerId() + " not found");
 	}
 
 	@Override
 	public List<SmartConsumerTimeslot> getAllSmartConsumerTimeslots() {
-		return smartConsumerTimeslotRepository.findAll();
+		if (securityService.isCurrentUserAdminOrSystem()) {
+			return smartConsumerTimeslotRepository.findAll(PageRequest.of(0, 1000)).getContent();
+		}
+		Long userId = securityService.getCurrentUserId();
+		return smartConsumerTimeslotRepository.findByUserId(userId);
+	}
+
+	@Override
+	public List<SmartConsumerTimeslot> getAllSmartConsumerTimeslotsByOwner(Long ownerId) {
+		if (securityService.isCurrentUserAdminOrSystem()) {
+			return smartConsumerTimeslotRepository.findByUserId(ownerId);
+		} else {
+			throw new UnauthorizedAccessException("Unauthorized access to SmartConsumerTimeslot for Owner with ID " + securityService.getCurrentUserId());
+		}
 	}
 
 	@Override
 	public SmartConsumerTimeslot getSmartConsumerTimeslotById(Long smartConsumerTimeslotId) {
-		return smartConsumerTimeslotRepository.findById(smartConsumerTimeslotId).orElseThrow(() -> new DeviceNotFoundException("SmartConsumerTimeslot with ID " + smartConsumerTimeslotId + " not found"));
+		SmartConsumerTimeslot timeslot = smartConsumerTimeslotRepository.findById(smartConsumerTimeslotId).orElse(null);
+		if (timeslot != null) {
+			if (securityService.canAccessTimeslot(timeslot)) {
+				return timeslot;
+			}
+			throw new UnauthorizedAccessException("Unauthorized access to SmartConsumerTimeslot with ID " + smartConsumerTimeslotId);
+		}
+		return null;
+	}
+
+	@Override
+	public SmartConsumerTimeslot updateSmartConsumerTimeslot(@Valid SmartConsumerTimeslotRequest request) {
+		if (request.getId() == null) {
+			throw new DeviceNotFoundException("SmartConsumerTimeslot ID must be provided when updating SmartConsumerTimeslot");
+		}
+		SmartConsumerTimeslot timeslot = smartConsumerTimeslotRepository.findById(request.getId()).orElse(null);
+		if (timeslot != null) {
+			if (securityService.canAccessTimeslot(timeslot)) {
+				SmartConsumer smartConsumer = smartConsumerRepository.findById(request.getSmartConsumerId()).orElse(null);
+				if (smartConsumer != null) {
+					if (securityService.canAccessDevice(smartConsumer)) {
+						SmartConsumerProgram program = smartConsumerProgramRepository.findById(request.getSmartConsumerProgramId()).orElse(null);
+						if (program != null) {
+							if (securityService.canAccessProgram(program)) {
+								timeslot.setSmartConsumer(smartConsumer);
+								timeslot.setSmartConsumerProgram(program);
+								timeslot.setStartTime(request.getStartTimeAsInstant());
+								int durationInSeconds = program.getDurationInSeconds();
+								timeslot.setEndTime(timeslot.getStartTime().plusSeconds(durationInSeconds));
+								smartConsumerTimeslotRepository.save(timeslot);
+								return timeslot;
+							}
+							throw new UnauthorizedAccessException("Unauthorized access to SmartConsumerProgram with ID " + request.getSmartConsumerProgramId());
+						}
+						throw new DeviceNotFoundException("SmartConsumerProgram with ID " + request.getSmartConsumerProgramId() + " not found");
+					}
+					throw new UnauthorizedAccessException("Unauthorized access to SmartConsumer with ID " + request.getSmartConsumerId());
+				}
+				throw new DeviceNotFoundException("SmartConsumer with ID " + request.getSmartConsumerId() + " not found");
+			}
+			throw new UnauthorizedAccessException("Unauthorized access to SmartConsumerTimeslot with ID " + request.getId());
+		}
+		throw new DeviceNotFoundException("SmartConsumerTimeslot with ID " + request.getId() + " not found");
+	}
+
+	@Override
+	public Map<String, String> deleteSmartConsumerTimeslot(Long smartConsumerTimeslotId) {
+		SmartConsumerTimeslot timeslot = smartConsumerTimeslotRepository.findById(smartConsumerTimeslotId).orElse(null);
+		if (timeslot != null) {
+			if (securityService.canAccessTimeslot(timeslot)) {
+				Map<String, String> response = Map.of(
+						"message", "Successfully deleted SmartConsumerTimeslot with ID " + smartConsumerTimeslotId,
+						"id", smartConsumerTimeslotId.toString()
+				);
+				smartConsumerTimeslotRepository.delete(timeslot);
+				return response;
+			}
+			throw new UnauthorizedAccessException("Unauthorized access to SmartConsumerTimeslot with ID " + smartConsumerTimeslotId);
+		}
+		throw new DeviceNotFoundException("SmartConsumerTimeslot with ID " + smartConsumerTimeslotId + " not found");
 	}
 }

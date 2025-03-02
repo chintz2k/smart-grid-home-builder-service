@@ -29,56 +29,50 @@ public class ProducerController {
 	}
 
 	@PostMapping
-	public ResponseEntity<ProducerResponse> createProducerForUser(@Valid @RequestBody ProducerRequest request) {
-		Producer producer = producerService.createProducerForUser(request);
+	public ResponseEntity<ProducerResponse> createProducer(@Valid @RequestBody ProducerRequest request) {
+		Producer producer = producerService.createProducer(request);
 		ProducerResponse dto = new ProducerResponse(producer);
 		return ResponseEntity.status(HttpStatus.CREATED).body(dto);
 	}
 
 	@GetMapping
-	public ResponseEntity<List<ProducerResponse>> getAllProducersFromUser() {
-		List<Producer> producerList = producerService.getAllProducersFromUser();
+	public ResponseEntity<List<ProducerResponse>> getAllProducers() {
+		List<Producer> producerList = producerService.getAllProducers();
 		List<ProducerResponse> dtoList = producerList.stream().map(ProducerResponse::new).toList();
 		return ResponseEntity.ok(dtoList);
 	}
 
 	@GetMapping("/{producerId}")
-	public ResponseEntity<ProducerResponse> getProducerByIdFromUser(@PathVariable Long producerId) {
-		Producer producer = producerService.getProducerByIdFromUser(producerId);
+	public ResponseEntity<ProducerResponse> getProducerById(@PathVariable Long producerId) {
+		Producer producer = producerService.getProducerById(producerId);
 		ProducerResponse dto = new ProducerResponse(producer);
 		return ResponseEntity.ok(dto);
 	}
 
-	@PutMapping("/{producerId}")
-	public ResponseEntity<ProducerResponse> updateProducerForUser(@PathVariable Long producerId, @Valid @RequestBody ProducerRequest request) {
-		Producer producer = producerService.updateProducerForUser(producerId, request);
+	@PutMapping("/update")
+	public ResponseEntity<ProducerResponse> updateProducer(@Valid @RequestBody ProducerRequest request) {
+		Producer producer = producerService.updateProducer(request);
 		ProducerResponse dto = new ProducerResponse(producer);
 		return ResponseEntity.ok(dto);
 	}
 
 	@PutMapping("/{producerId}/archive")
-	public ResponseEntity<Map<String, String>> archiveProducerForUser(@PathVariable Long producerId) {
-		Map<String, String> success = producerService.archiveProducerForUser(producerId);
+	public ResponseEntity<Map<String, String>> archiveProducer(@PathVariable Long producerId) {
+		Map<String, String> success = producerService.archiveProducer(producerId);
 		return ResponseEntity.ok().body(success);
 	}
 
 	@DeleteMapping("/{producerId}")
-	public ResponseEntity<Map<String, String>> deleteProducerForUser(@PathVariable Long producerId) {
-		Map<String, String> success = producerService.deleteProducerForUser(producerId);
+	public ResponseEntity<Map<String, String>> deleteProducer(@PathVariable Long producerId) {
+		Map<String, String> success = producerService.deleteProducer(producerId);
 		return ResponseEntity.ok().body(success);
 	}
 
-	@GetMapping("/admin")
-	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<List<Producer>> getAllProducers() {
-		List<Producer> producerList = producerService.getAllProducers();
-		return ResponseEntity.ok(producerList);
-	}
-
-	@GetMapping("/admin/{producerId}")
-	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<Producer> getProducerById(@PathVariable Long producerId) {
-		Producer producer = producerService.getProducerById(producerId);
-		return ResponseEntity.ok(producer);
+	@GetMapping("/owner")
+	@PreAuthorize("hasRole('ADMIN') or hasRole('SYSTEM')")
+	public ResponseEntity<List<ProducerResponse>> getAllProducersByOwner(@RequestParam Long ownerId) {
+		List<Producer> producerList = producerService.getAllProducersByOwner(ownerId);
+		List<ProducerResponse> dtoList = producerList.stream().map(ProducerResponse::new).toList();
+		return ResponseEntity.ok(dtoList);
 	}
 }

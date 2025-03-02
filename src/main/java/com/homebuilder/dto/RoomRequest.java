@@ -10,10 +10,12 @@ import jakarta.validation.constraints.NotBlank;
 @UniqueRoomName
 public class RoomRequest {
 
-	private Long id;
+	private Long id = null;
 
 	@NotBlank(message = "name is required")
 	private String name;
+
+	private Long ownerId = null;
 
 	public RoomRequest() {
 
@@ -35,6 +37,20 @@ public class RoomRequest {
 		this.name = name;
 	}
 
+	public Long getOwnerId() {
+		return ownerId;
+	}
+
+	public void setOwnerId(Long ownerId) {
+		this.ownerId = ownerId;
+	}
+
+	/**
+	 * Converts this RoomRequest object into a Room entity object.
+	 * Only for new Rooms. If you want to update a Room, refer directly to the fields of the RoomRequest.
+	 *
+	 * @return a new Room entity, only for creating new Rooms.
+	 */
 	public Room toEntity() {
 		Room room = new Room();
 		room.setName(name);

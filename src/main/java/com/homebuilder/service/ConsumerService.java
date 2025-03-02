@@ -11,15 +11,13 @@ import java.util.Map;
  */
 public interface ConsumerService {
 
-	Consumer createConsumerForUser(ConsumerRequest request);
-	List<Consumer> getAllConsumersFromUser();
-	Consumer getConsumerByIdFromUser(Long consumerId);
-	Consumer updateConsumerForUser(Long consumerId, ConsumerRequest request);
-	Map<String, String> archiveConsumerForUser(Long consumerId);
-	Map<String, String> deleteConsumerForUser(Long consumerId);
-
+	Consumer createConsumer(ConsumerRequest request);
 	List<Consumer> getAllConsumers();
+	List<Consumer> getAllConsumersByOwner(Long ownerId);
 	Consumer getConsumerById(Long consumerId);
-	Consumer updateConsumer(Long consumerId, Consumer request);
+	Consumer updateConsumer(ConsumerRequest request);
+	Map<String, String> setActive(Consumer consumer, boolean active);
+	Map<String, String> archiveConsumer(Long consumerId);
+	Map<String, String> deleteConsumer(Long consumerId);
 
 }

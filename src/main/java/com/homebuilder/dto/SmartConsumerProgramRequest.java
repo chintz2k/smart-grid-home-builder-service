@@ -11,10 +11,12 @@ import jakarta.validation.constraints.NotNull;
  */
 public class SmartConsumerProgramRequest {
 
-	private Long id;
+	private Long id = null;
 
 	@NotBlank(message = "name is required")
 	private String name;
+
+	private Long ownerId = null;
 
 	@NotNull(message = "Duration is required")
 	@Min(value = 1, message = "Duration must be at least 1")
@@ -47,6 +49,14 @@ public class SmartConsumerProgramRequest {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	public Long getOwnerId() {
+		return ownerId;
+	}
+
+	public void setOwnerId(Long ownerId) {
+		this.ownerId = ownerId;
 	}
 
 	public int getDurationInSeconds() {
@@ -86,7 +96,6 @@ public class SmartConsumerProgramRequest {
 		smartConsumerProgram.setName(name);
 		smartConsumerProgram.setDurationInSeconds(durationInSeconds);
 		smartConsumerProgram.setPowerConsumption(powerConsumption);
-		smartConsumerProgram.setArchived(archived);
 		return smartConsumerProgram;
 	}
 }

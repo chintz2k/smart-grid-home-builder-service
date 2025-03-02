@@ -1,6 +1,7 @@
 package com.homebuilder.dto;
 
 import com.homebuilder.entity.Storage;
+import com.homebuilder.exception.DeviceNotFoundException;
 
 /**
  * @author André Heinen
@@ -17,6 +18,9 @@ public class StorageResponse {
 	private final int consumingPriority;
 
 	public StorageResponse(Storage storage) {
+		if (storage == null) {
+			throw new DeviceNotFoundException("Storage not found");
+		}
 		this.id = storage.getId();
 		this.name = storage.getName();
 		this.active = storage.isActive();

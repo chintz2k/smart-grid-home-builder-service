@@ -2,6 +2,7 @@ package com.homebuilder.dto;
 
 import com.homebuilder.entity.SmartConsumerTimeslot;
 import com.homebuilder.entity.SmartConsumerTimeslotStatusCodes;
+import com.homebuilder.exception.DeviceNotFoundException;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -21,6 +22,9 @@ public class SmartConsumerTimeslotResponse {
 	private final boolean archived;
 
 	public SmartConsumerTimeslotResponse(SmartConsumerTimeslot smartConsumerTimeslot, String timeZone) {
+		if (smartConsumerTimeslot == null) {
+			throw new DeviceNotFoundException("SmartConsumerTimeslot not found");
+		}
 		this.id = smartConsumerTimeslot.getId();
 		this.startTime = convertInstantToZonedDateTime(smartConsumerTimeslot.getStartTime(), ZoneId.of(timeZone));
 		this.endTime = convertInstantToZonedDateTime(smartConsumerTimeslot.getEndTime(), ZoneId.of(timeZone));

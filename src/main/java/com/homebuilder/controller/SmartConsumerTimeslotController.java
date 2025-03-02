@@ -29,50 +29,44 @@ public class SmartConsumerTimeslotController {
 	}
 
 	@PostMapping
-	public ResponseEntity<SmartConsumerTimeslotResponse> createSmartConsumerTimeslotForUser(@Valid @RequestBody SmartConsumerTimeslotRequest request, @RequestHeader(value = "Time-Zone", required = false) String timeZone) {
-		SmartConsumerTimeslot smartConsumerTimeslot = smartConsumerTimeslotService.createSmartConsumerTimeslotForUser(request);
+	public ResponseEntity<SmartConsumerTimeslotResponse> createSmartConsumerTimeslot(@Valid @RequestBody SmartConsumerTimeslotRequest request, @RequestHeader(value = "Time-Zone") String timeZone) {
+		SmartConsumerTimeslot smartConsumerTimeslot = smartConsumerTimeslotService.createSmartConsumerTimeslot(request);
 		SmartConsumerTimeslotResponse dto = new SmartConsumerTimeslotResponse(smartConsumerTimeslot, timeZone);
 		return ResponseEntity.status(HttpStatus.CREATED).body(dto);
 	}
 
 	@GetMapping
-	public ResponseEntity<List<SmartConsumerTimeslotResponse>> getAllSmartConsumerTimeslotsFromUser(@RequestHeader(value = "Time-Zone", required = false) String timeZone) {
-		List<SmartConsumerTimeslot> smartConsumerTimeslotList = smartConsumerTimeslotService.getAllSmartConsumerTimeslotsFromUser();
+	public ResponseEntity<List<SmartConsumerTimeslotResponse>> getAllSmartConsumerTimeslots(@RequestHeader(value = "Time-Zone") String timeZone) {
+		List<SmartConsumerTimeslot> smartConsumerTimeslotList = smartConsumerTimeslotService.getAllSmartConsumerTimeslots();
 		List<SmartConsumerTimeslotResponse> dtoList = smartConsumerTimeslotList.stream().map(smartConsumerTimeslot -> new SmartConsumerTimeslotResponse(smartConsumerTimeslot, timeZone)).toList();
 		return ResponseEntity.ok(dtoList);
 	}
 
 	@GetMapping("/{smartConsumerTimeslotId}")
-	public ResponseEntity<SmartConsumerTimeslotResponse> getSmartConsumerTimeslotByIdFromUser(@PathVariable Long smartConsumerTimeslotId, @RequestHeader(value = "Time-Zone", required = false) String timeZone) {
-		SmartConsumerTimeslot smartConsumerTimeslot = smartConsumerTimeslotService.getSmartConsumerTimeslotByIdFromUser(smartConsumerTimeslotId);
+	public ResponseEntity<SmartConsumerTimeslotResponse> getSmartConsumerTimeslotById(@PathVariable Long smartConsumerTimeslotId, @RequestHeader(value = "Time-Zone") String timeZone) {
+		SmartConsumerTimeslot smartConsumerTimeslot = smartConsumerTimeslotService.getSmartConsumerTimeslotById(smartConsumerTimeslotId);
 		SmartConsumerTimeslotResponse dto = new SmartConsumerTimeslotResponse(smartConsumerTimeslot, timeZone);
 		return ResponseEntity.ok(dto);
 	}
 
-	@PutMapping("/{smartConsumerTimeslotId}")
-	public ResponseEntity<SmartConsumerTimeslotResponse> updateSmartConsumerTimeslotForUser(@PathVariable Long smartConsumerTimeslotId, @Valid @RequestBody SmartConsumerTimeslotRequest request, @RequestHeader(value = "Time-Zone", required = false) String timeZone) {
-		SmartConsumerTimeslot smartConsumerTimeslot = smartConsumerTimeslotService.updateSmartConsumerTimeslotForUser(smartConsumerTimeslotId, request);
+	@PutMapping("/update")
+	public ResponseEntity<SmartConsumerTimeslotResponse> updateSmartConsumerTimeslot(@Valid @RequestBody SmartConsumerTimeslotRequest request, @RequestHeader(value = "Time-Zone") String timeZone) {
+		SmartConsumerTimeslot smartConsumerTimeslot = smartConsumerTimeslotService.updateSmartConsumerTimeslot(request);
 		SmartConsumerTimeslotResponse dto = new SmartConsumerTimeslotResponse(smartConsumerTimeslot, timeZone);
 		return ResponseEntity.ok(dto);
 	}
 
 	@DeleteMapping("/{smartConsumerTimeslotId}")
-	public ResponseEntity<Map<String, String>> deleteSmartConsumerTimeslotForUser(@PathVariable Long smartConsumerTimeslotId) {
-		Map<String, String> success = smartConsumerTimeslotService.deleteSmartConsumerTimeslotForUser(smartConsumerTimeslotId);
+	public ResponseEntity<Map<String, String>> deleteSmartConsumerTimeslot(@PathVariable Long smartConsumerTimeslotId) {
+		Map<String, String> success = smartConsumerTimeslotService.deleteSmartConsumerTimeslot(smartConsumerTimeslotId);
 		return ResponseEntity.ok().body(success);
 	}
 
-	@GetMapping("/admin")
-	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<List<SmartConsumerTimeslot>> getAllSmartConsumerTimeslots() {
-		List<SmartConsumerTimeslot> smartConsumerTimeslotList = smartConsumerTimeslotService.getAllSmartConsumerTimeslots();
-		return ResponseEntity.ok(smartConsumerTimeslotList);
-	}
-
-	@GetMapping("/admin/{smartConsumerTimeslotId}")
-	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<SmartConsumerTimeslot> getSmartConsumerTimeslotById(@PathVariable Long smartConsumerTimeslotId) {
-		SmartConsumerTimeslot smartConsumerTimeslot = smartConsumerTimeslotService.getSmartConsumerTimeslotById(smartConsumerTimeslotId);
-		return ResponseEntity.ok(smartConsumerTimeslot);
+	@GetMapping("/owner")
+	@PreAuthorize("hasRole('ADMIN') or hasRole('SYSTEM')")
+	public ResponseEntity<List<SmartConsumerTimeslotResponse>> getAllSmartConsumerTimeslotsByOwner(@RequestParam Long ownerId, @RequestHeader(value = "Time-Zone") String timeZone) {
+		List<SmartConsumerTimeslot> smartConsumerTimeslotList = smartConsumerTimeslotService.getAllSmartConsumerTimeslotsByOwner(ownerId);
+		List<SmartConsumerTimeslotResponse> dtoList = smartConsumerTimeslotList.stream().map(smartConsumerTimeslot -> new SmartConsumerTimeslotResponse(smartConsumerTimeslot, timeZone)).toList();
+		return ResponseEntity.ok(dtoList);
 	}
 }

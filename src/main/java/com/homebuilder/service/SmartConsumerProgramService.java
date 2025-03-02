@@ -11,13 +11,12 @@ import java.util.Map;
  */
 public interface SmartConsumerProgramService {
 
-	SmartConsumerProgram createSmartConsumerProgramForUser(SmartConsumerProgramRequest request);
-	List<SmartConsumerProgram> getAllSmartConsumerProgramsFromUser();
-	SmartConsumerProgram getSmartConsumerProgramByIdFromUser(Long smartConsumerProgramId);
-	SmartConsumerProgram updateSmartConsumerProgramForUser(Long existingProgramId, SmartConsumerProgramRequest request);
-	Map<String, String> archiveSmartConsumerProgramForUser(Long smartConsumerProgramId);
-	Map<String, String> deleteSmartConsumerProgramForUser(Long smartConsumerProgramId);
-
+	SmartConsumerProgram createSmartConsumerProgram(SmartConsumerProgramRequest request);
 	List<SmartConsumerProgram> getAllSmartConsumerPrograms();
+	List<SmartConsumerProgram> getAllSmartConsumerProgramsByOwner(Long ownerId);
 	SmartConsumerProgram getSmartConsumerProgramById(Long smartConsumerProgramId);
+	SmartConsumerProgram updateSmartConsumerProgram(SmartConsumerProgramRequest request);
+	Map<String, String> archiveSmartConsumerProgram(Long smartConsumerProgramId);
+	Map<String, String> deleteSmartConsumerProgram(Long smartConsumerProgramId);
+
 }

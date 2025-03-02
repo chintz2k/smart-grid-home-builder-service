@@ -29,56 +29,50 @@ public class StorageController {
 	}
 
 	@PostMapping
-	public ResponseEntity<StorageResponse> createStorageForUser(@Valid @RequestBody StorageRequest request) {
-		Storage storage = storageService.createStorageForUser(request);
+	public ResponseEntity<StorageResponse> createStorage(@Valid @RequestBody StorageRequest request) {
+		Storage storage = storageService.createStorage(request);
 		StorageResponse dto = new StorageResponse(storage);
 		return ResponseEntity.status(HttpStatus.CREATED).body(dto);
 	}
 
 	@GetMapping
-	public ResponseEntity<List<StorageResponse>> getAllStoragesFromUser() {
-		List<Storage> storageList = storageService.getAllStoragesFromUser();
+	public ResponseEntity<List<StorageResponse>> getAllStorages() {
+		List<Storage> storageList = storageService.getAllStorages();
 		List<StorageResponse> dtoList = storageList.stream().map(StorageResponse::new).toList();
 		return ResponseEntity.ok(dtoList);
 	}
 
 	@GetMapping("/{storageId}")
-	public ResponseEntity<StorageResponse> getStorageByIdFromUser(@PathVariable Long storageId) {
-		Storage storage = storageService.getStorageByIdFromUser(storageId);
+	public ResponseEntity<StorageResponse> getStorageById(@PathVariable Long storageId) {
+		Storage storage = storageService.getStorageById(storageId);
 		StorageResponse dto = new StorageResponse(storage);
 		return ResponseEntity.ok(dto);
 	}
 
-	@PutMapping("/{storageId}")
-	public ResponseEntity<StorageResponse> updateStorageForUser(@PathVariable Long storageId, @Valid @RequestBody StorageRequest request) {
-		Storage storage = storageService.updateStorageForUser(storageId, request);
+	@PutMapping("/update")
+	public ResponseEntity<StorageResponse> updateStorage(@Valid @RequestBody StorageRequest request) {
+		Storage storage = storageService.updateStorage(request);
 		StorageResponse dto = new StorageResponse(storage);
 		return ResponseEntity.ok(dto);
 	}
 
 	@PutMapping("/{storageId}/archive")
-	public ResponseEntity<Map<String, String>> archiveStorageForUser(@PathVariable Long storageId) {
-		Map<String, String> success = storageService.archiveStorageForUser(storageId);
+	public ResponseEntity<Map<String, String>> archiveStorage(@PathVariable Long storageId) {
+		Map<String, String> success = storageService.archiveStorage(storageId);
 		return ResponseEntity.ok().body(success);
 	}
 
 	@DeleteMapping("/{storageId}")
-	public ResponseEntity<Map<String, String>> deleteStorageForUser(@PathVariable Long storageId) {
-		Map<String, String> success = storageService.deleteStorageForUser(storageId);
+	public ResponseEntity<Map<String, String>> deleteStorage(@PathVariable Long storageId) {
+		Map<String, String> success = storageService.deleteStorage(storageId);
 		return ResponseEntity.ok().body(success);
 	}
 
-	@GetMapping("/admin")
-	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<List<Storage>> getAllStorages() {
-		List<Storage> storageList = storageService.getAllStorages();
-		return ResponseEntity.ok(storageList);
-	}
-
-	@GetMapping("/admin/{storageId}")
-	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<Storage> getStorageById(@PathVariable Long storageId) {
-		Storage storage = storageService.getStorageById(storageId);
-		return ResponseEntity.ok(storage);
+	@GetMapping("/owner")
+	@PreAuthorize("hasRole('ADMIN') or hasRole('SYSTEM')")
+	public ResponseEntity<List<StorageResponse>> getAllStoragesByOwner(@RequestParam Long ownerId) {
+		List<Storage> storageList = storageService.getAllStoragesByOwner(ownerId);
+		List<StorageResponse> dtoList = storageList.stream().map(StorageResponse::new).toList();
+		return ResponseEntity.ok(dtoList);
 	}
 }

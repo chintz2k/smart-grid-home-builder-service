@@ -2,16 +2,24 @@ package com.homebuilder.service;
 
 import com.homebuilder.dto.StorageRequest;
 import com.homebuilder.entity.Storage;
+import com.homebuilder.exception.CreateDeviceFailedException;
 import com.homebuilder.exception.DeviceNotFoundException;
 import com.homebuilder.exception.UnauthorizedAccessException;
 import com.homebuilder.repository.StorageRepository;
 import com.homebuilder.security.SecurityService;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author André Heinen
@@ -19,113 +27,172 @@ import java.util.Map;
 @Service
 public class StorageServiceImpl implements StorageService {
 
+	private static final Logger logger = LoggerFactory.getLogger(StorageServiceImpl.class);
+
 	private final StorageRepository storageRepository;
 
 	private final SecurityService securityService;
 
+	private final KafkaTemplate<String, String> kafkaTemplate;
+
 	@Autowired
-	public StorageServiceImpl(StorageRepository storageRepository, SecurityService securityService) {
+	public StorageServiceImpl(StorageRepository storageRepository, SecurityService securityService, KafkaTemplate<String, String> kafkaTemplate) {
 		this.storageRepository = storageRepository;
 		this.securityService = securityService;
+		this.kafkaTemplate = kafkaTemplate;
 	}
 
 	@Override
-	public Storage createStorageForUser(@Valid StorageRequest request) {
-		Long userId = securityService.getCurrentUserId();
+	public Storage createStorage(@Valid StorageRequest request) {
 		Storage storage = request.toEntity();
-		storage.setUserId(userId);
+		if (securityService.isCurrentUserAdminOrSystem()) {
+			if (request.getOwnerId() == null) {
+				throw new CreateDeviceFailedException("Owner ID must be provided when creating Storage as System User");
+			} else {
+				storage.setUserId(request.getOwnerId());
+			}
+		} else {
+			storage.setUserId(securityService.getCurrentUserId());
+		}
 		storageRepository.save(storage);
 		return storage;
-	}
-
-	@Override
-	public List<Storage> getAllStoragesFromUser() {
-		Long userId = securityService.getCurrentUserId();
-		List<Storage> storageList = storageRepository.findByUserId(userId);
-		if (storageList.isEmpty()) {
-			throw new DeviceNotFoundException("No Storages found for User with ID " + userId);
-		}
-		return storageList;
-	}
-
-	@Override
-	public Storage getStorageByIdFromUser(Long storageId) {
-		Long userId = securityService.getCurrentUserId();
-		Storage storage = storageRepository.findById(storageId).orElseThrow(() -> new DeviceNotFoundException("Storage with ID " + storageId + " not found"));
-		if (!storage.getUserId().equals(userId)) {
-			throw new UnauthorizedAccessException("Unauthorized access to storage with ID " + storageId);
-		}
-		return storage;
-	}
-
-	@Override
-	public Storage updateStorageForUser(Long existingStorageId, @Valid StorageRequest request) {
-		Long userId = securityService.getCurrentUserId();
-		Storage existingStorage = getStorageByIdFromUser(existingStorageId);
-		if (!existingStorage.getUserId().equals(userId)) {
-			throw new UnauthorizedAccessException("Unauthorized access to storage with ID " + existingStorageId);
-		}
-		existingStorage.setName(request.getName());
-		existingStorage.setActive(request.isActive());
-		existingStorage.setArchived(request.isArchived());
-		existingStorage.setCapacity(request.getCapacity());
-		existingStorage.setChargingPriority(request.getChargingPriority());
-		existingStorage.setConsumingPriority(request.getConsumingPriority());
-		storageRepository.save(existingStorage);
-		return existingStorage;
-	}
-
-	@Override
-	public Map<String, String> archiveStorageForUser(Long storageId) {
-		Long userId = securityService.getCurrentUserId();
-		Storage storage = getStorageByIdFromUser(storageId);
-		if (!storage.getUserId().equals(userId)) {
-			throw new UnauthorizedAccessException("Unauthorized access to storage with ID " + storageId);
-		}
-		Map<String, String> response = Map.of(
-				"message", "Successfully archived SmartConsumer with ID " + storageId,
-				"id", storageId.toString()
-		);
-		storageRepository.save(storage);
-		return response;
-	}
-
-	@Override
-	public Map<String, String> deleteStorageForUser(Long storageId) {
-		Long userId = securityService.getCurrentUserId();
-		Storage storage = getStorageByIdFromUser(storageId);
-		if (!storage.getUserId().equals(userId)) {
-			throw new UnauthorizedAccessException("Unauthorized access to storage with ID " + storageId);
-		}
-		Map<String, String> response = Map.of(
-				"message", "Successfully deleted SmartConsumer with ID " + storageId,
-				"id", storageId.toString()
-		);
-		storageRepository.delete(storage);
-		return response;
 	}
 
 	@Override
 	public List<Storage> getAllStorages() {
-		return storageRepository.findAll();
+		if (securityService.isCurrentUserAdminOrSystem()) {
+			return storageRepository.findAll(PageRequest.of(0, 1000)).getContent();
+		}
+		Long userId = securityService.getCurrentUserId();
+		return storageRepository.findByUserId(userId);
+	}
+
+	@Override
+	public List<Storage> getAllStoragesByOwner(Long ownerId) {
+		if (securityService.isCurrentUserAdminOrSystem()) {
+			return storageRepository.findByUserId(ownerId);
+		} else {
+			throw new UnauthorizedAccessException("Unauthorized access to Storages for Owner with ID " + ownerId);
+		}
 	}
 
 	@Override
 	public Storage getStorageById(Long storageId) {
-		return storageRepository.findById(storageId).orElseThrow(() -> new DeviceNotFoundException("Storage with ID " + storageId + " not found"));
+		Storage storage = storageRepository.findById(storageId).orElse(null);
+		if (storage != null) {
+			if (securityService.canAccessDevice(storage)) {
+				return storage;
+			} else {
+				throw new UnauthorizedAccessException("Unauthorized access to Storage with ID " + storageId);
+			}
+		}
+		return null;
 	}
 
 	@Override
-	public Storage updateStorage(Long storageId, @Valid Storage request) {
-		Storage storage = getStorageById(storageId);
-		storage.setName(request.getName());
-		storage.setActive(request.isActive());
-		storage.setArchived(request.isArchived());
-		storage.setCapacity(request.getCapacity());
-		storage.setCurrentCharge(request.getCurrentCharge());
-		storage.setChargingPriority(request.getChargingPriority());
-		storage.setConsumingPriority(request.getConsumingPriority());
-		storageRepository.save(storage);
-		return storage;
+	public Storage updateStorage(@Valid StorageRequest request) {
+		if (request.getId() == null) {
+			throw new CreateDeviceFailedException("Storage ID must be provided when updating Storage");
+		}
+		Storage storage = storageRepository.findById(request.getId()).orElse(null);
+		if (storage != null) {
+			if (securityService.canAccessDevice(storage)) {
+				boolean changed = false;
+				if (!Objects.equals(request.getName(), storage.getName())) {
+					storage.setName(request.getName());
+					changed = true;
+				}
+				if (request.getCapacity() != storage.getCapacity()) {
+					if (storage.isActive()) {
+						setActive(storage, false);
+					}
+					storage.setCapacity(request.getCapacity());
+					changed = true;
+				}
+				if (changed) {
+					storageRepository.save(storage);
+					return storage;
+				}
+				throw new CreateDeviceFailedException("No changes detected in Storage");
+			}
+			throw new UnauthorizedAccessException("Unauthorized access to Storage with ID " + request.getId());
+		}
+		return null;
+	}
+
+	@Override
+	public Map<String, String> setActive(Storage storage, boolean active) {
+		if (storage != null) {
+			if (securityService.canAccessDevice(storage)) {
+				if (storage.isArchived()) {
+					throw new CreateDeviceFailedException("Storage with ID " + storage.getId() + " is archived and cannot be activated or deactivated");
+				}
+				if (storage.isActive() && active) {
+					throw new CreateDeviceFailedException("Storage with ID " + storage.getId() + " is already active");
+				}
+				if (!storage.isActive() && !active) {
+					throw new CreateDeviceFailedException("Storage with ID " + storage.getId() + " is already inactive");
+				}
+				storage.setActive(active);
+				storageRepository.save(storage);
+				String event = String.format(
+						Locale.ENGLISH,
+						"{\"deviceId\": %d, \"ownerId\": %d, \"commercial\": %b, \"active\": %b, \"capacity\": %f, \"currentCharge\": %f, \"chargingPriority\": %d, \"consumingPriority\": %d, \"timestamp\": \"%s\"}",
+						storage.getId(), storage.getUserId(), securityService.isCurrentUserACommercialUser(), active, storage.getCapacity(), storage.getCurrentCharge(), storage.getChargingPriority(), storage.getConsumingPriority(), Instant.now());
+				kafkaTemplate.send("storage-events", event).whenComplete((result, exception) -> {
+					if (exception != null) {
+						logger.error("Fehler beim Senden des Events: {}", exception.getMessage());
+					}
+				});
+				return Map.of(
+						"message", "Successfully updated Storage with ID " + storage.getId(),
+						"id", storage.getId().toString(),
+						"active", storage.isActive() ? "true" : "false"
+				);
+			}
+		}
+		throw new DeviceNotFoundException("Storage not found");
+	}
+
+	@Override
+	public Map<String, String> archiveStorage(Long storageId) {
+		Storage storage = storageRepository.findById(storageId).orElse(null);
+		if (storage != null) {
+			if (securityService.canAccessDevice(storage)) {
+				if (!storage.isArchived()) {
+					storage.setArchived(true);
+					if (storage.isActive()) {
+						setActive(storage, false);
+					}
+					Map<String, String> response = Map.of(
+							"message", "Successfully archived Storage with ID " + storageId,
+							"id", storageId.toString()
+					);
+					storageRepository.save(storage);
+					return response;
+				} else {
+					throw new CreateDeviceFailedException("Storage with ID " + storageId + " is already archived");
+				}
+			}
+			throw new UnauthorizedAccessException("Unauthorized access to Storage with ID " + storageId);
+		}
+		return null;
+	}
+
+	@Override
+	public Map<String, String> deleteStorage(Long storageId) {
+		Storage storage = storageRepository.findById(storageId).orElse(null);
+		if (storage != null) {
+			if (securityService.canAccessDevice(storage)) {
+				Map<String, String> response = Map.of(
+						"message", "Successfully deleted Storage with ID " + storageId,
+						"id", storageId.toString()
+				);
+				storageRepository.delete(storage);
+				return response;
+			}
+			throw new UnauthorizedAccessException("Unauthorized access to Storage with ID " + storageId);
+		}
+		return null;
 	}
 }

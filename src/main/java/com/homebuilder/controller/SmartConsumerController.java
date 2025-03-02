@@ -29,56 +29,50 @@ public class SmartConsumerController {
 	}
 
 	@PostMapping
-	public ResponseEntity<SmartConsumerResponse> createSmartConsumerForUser(@Valid @RequestBody SmartConsumerRequest request) {
-		SmartConsumer smartConsumer = smartConsumerService.createSmartConsumerForUser(request);
+	public ResponseEntity<SmartConsumerResponse> createSmartConsumer(@Valid @RequestBody SmartConsumerRequest request) {
+		SmartConsumer smartConsumer = smartConsumerService.createSmartConsumer(request);
 		SmartConsumerResponse dto = new SmartConsumerResponse(smartConsumer);
 		return ResponseEntity.status(HttpStatus.CREATED).body(dto);
 	}
 
 	@GetMapping
-	public ResponseEntity<List<SmartConsumerResponse>> getAllSmartConsumersFromUser() {
-		List<SmartConsumer> smartConsumerList = smartConsumerService.getAllSmartConsumersFromUser();
+	public ResponseEntity<List<SmartConsumerResponse>> getAllSmartConsumers() {
+		List<SmartConsumer> smartConsumerList = smartConsumerService.getAllSmartConsumers();
 		List<SmartConsumerResponse> dtoList = smartConsumerList.stream().map(SmartConsumerResponse::new).toList();
 		return ResponseEntity.ok(dtoList);
 	}
 
 	@GetMapping("/{smartConsumerId}")
-	public ResponseEntity<SmartConsumerResponse> getSmartConsumerByIdFromUser(@PathVariable Long smartConsumerId) {
-		SmartConsumer smartConsumer = smartConsumerService.getSmartConsumerByIdFromUser(smartConsumerId);
+	public ResponseEntity<SmartConsumerResponse> getSmartConsumerById(@PathVariable Long smartConsumerId) {
+		SmartConsumer smartConsumer = smartConsumerService.getSmartConsumerById(smartConsumerId);
 		SmartConsumerResponse dto = new SmartConsumerResponse(smartConsumer);
 		return ResponseEntity.ok(dto);
 	}
 
-	@PutMapping("/{smartConsumerId}")
-	public ResponseEntity<SmartConsumerResponse> updateSmartConsumerForUser(@PathVariable Long smartConsumerId, @Valid @RequestBody SmartConsumerRequest request) {
-		SmartConsumer smartConsumer = smartConsumerService.updateSmartConsumerForUser(smartConsumerId, request);
+	@PutMapping("/update")
+	public ResponseEntity<SmartConsumerResponse> updateSmartConsumer(@Valid @RequestBody SmartConsumerRequest request) {
+		SmartConsumer smartConsumer = smartConsumerService.updateSmartConsumer(request);
 		SmartConsumerResponse dto = new SmartConsumerResponse(smartConsumer);
 		return ResponseEntity.ok(dto);
 	}
 
 	@PutMapping("/{smartConsumerId}/archive")
-	public ResponseEntity<Map<String, String>> archiveSmartConsumerForUser(@PathVariable Long smartConsumerId) {
-		Map<String, String> success = smartConsumerService.archiveSmartConsumerForUser(smartConsumerId);
+	public ResponseEntity<Map<String, String>> archiveSmartConsumer(@PathVariable Long smartConsumerId) {
+		Map<String, String> success = smartConsumerService.archiveSmartConsumer(smartConsumerId);
 		return ResponseEntity.ok().body(success);
 	}
 
 	@DeleteMapping("/{smartConsumerId}")
-	public ResponseEntity<Map<String, String>> deleteSmartConsumerForUser(@PathVariable Long smartConsumerId) {
-		Map<String, String> success = smartConsumerService.deleteSmartConsumerForUser(smartConsumerId);
+	public ResponseEntity<Map<String, String>> deleteSmartConsumer(@PathVariable Long smartConsumerId) {
+		Map<String, String> success = smartConsumerService.deleteSmartConsumer(smartConsumerId);
 		return ResponseEntity.ok().body(success);
 	}
 
-	@GetMapping("/admin")
-	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<List<SmartConsumer>> getAllSmartConsumers() {
-		List<SmartConsumer> smartConsumerList = smartConsumerService.getAllSmartConsumers();
-		return ResponseEntity.ok(smartConsumerList);
-	}
-
-	@GetMapping("/admin/{smartConsumerId}")
-	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<SmartConsumer> getSmartConsumerById(@PathVariable Long smartConsumerId) {
-		SmartConsumer smartConsumer = smartConsumerService.getSmartConsumerById(smartConsumerId);
-		return ResponseEntity.ok(smartConsumer);
+	@GetMapping("/owner")
+	@PreAuthorize("hasRole('ADMIN') or hasRole('SYSTEM')")
+	public ResponseEntity<List<SmartConsumerResponse>> getAllSmartConsumersByOwner(@RequestParam Long ownerId) {
+		List<SmartConsumer> smartConsumerList = smartConsumerService.getAllSmartConsumersByOwner(ownerId);
+		List<SmartConsumerResponse> dtoList = smartConsumerList.stream().map(SmartConsumerResponse::new).toList();
+		return ResponseEntity.ok(dtoList);
 	}
 }

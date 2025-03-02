@@ -21,6 +21,13 @@ import java.util.stream.Collectors;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
+	@ExceptionHandler(CreateDeviceFailedException.class)
+	public ResponseEntity<Map<String, String>> handleCreateDeviceFailedException(CreateDeviceFailedException ex, WebRequest request) {
+		Map<String, String> error = new HashMap<>();
+		error.put("error", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+	}
+
 	@ExceptionHandler(DeviceNotFoundException.class)
 	public ResponseEntity<Map<String, String>> handleDeviceNotFoundException(DeviceNotFoundException ex, WebRequest request) {
 		Map<String, String> error = new HashMap<>();
@@ -98,6 +105,13 @@ public class GlobalExceptionHandler {
 			return timeslotInfo;
 		}));
 		return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+	}
+
+	@ExceptionHandler(TimeZoneNotValidException.class)
+	public ResponseEntity<Map<String, String>> handleTimeZoneNotValidException(TimeZoneNotValidException ex, WebRequest request) {
+		Map<String, String> error = new HashMap<>();
+		error.put("error", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
 	}
 
 	@ExceptionHandler(ConstraintViolationException.class)

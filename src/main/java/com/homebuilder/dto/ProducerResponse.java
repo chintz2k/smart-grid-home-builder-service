@@ -1,6 +1,7 @@
 package com.homebuilder.dto;
 
 import com.homebuilder.entity.Producer;
+import com.homebuilder.exception.DeviceNotFoundException;
 
 /**
  * @author André Heinen
@@ -24,6 +25,9 @@ public class ProducerResponse {
 	private final boolean nuclearPower;
 
 	public ProducerResponse(Producer producer) {
+		if (producer == null) {
+			throw new DeviceNotFoundException("Producer not found");
+		}
 		this.id = producer.getId();
 		this.name = producer.getName();
 		this.active = producer.isActive();

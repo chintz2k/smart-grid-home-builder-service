@@ -10,10 +10,12 @@ import jakarta.validation.constraints.NotNull;
  */
 public class ConsumerRequest {
 
-	private Long id;
+	private Long id = null;
 
 	@NotBlank(message = "name is required")
 	private String name;
+
+	private Long ownerId = null;
 
 	private boolean active = false;
 
@@ -43,6 +45,14 @@ public class ConsumerRequest {
 		this.name = name;
 	}
 
+	public Long getOwnerId() {
+		return ownerId;
+	}
+
+	public void setOwnerId(Long ownerId) {
+		this.ownerId = ownerId;
+	}
+
 	public boolean isActive() {
 		return active;
 	}
@@ -67,6 +77,12 @@ public class ConsumerRequest {
 		this.powerConsumption = powerConsumption;
 	}
 
+	/**
+	 * Converts this ConsumerRequest object into a Consumer entity object.
+	 * Only for new Consumers. If you want to update a Consumer, refer directly to the fields of the ConsumerRequest.
+	 *
+	 * @return a new Consumer entity, only for creating new Consumers.
+	 */
 	public Consumer toEntity() {
 		Consumer consumer = new Consumer();
 		consumer.setName(name);

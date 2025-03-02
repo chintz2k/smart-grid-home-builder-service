@@ -1,6 +1,7 @@
 package com.homebuilder.dto;
 
 import com.homebuilder.entity.Consumer;
+import com.homebuilder.exception.DeviceNotFoundException;
 
 /**
  * @author André Heinen
@@ -14,6 +15,9 @@ public class ConsumerResponse {
 	private final double powerConsumption;
 
 	public ConsumerResponse(Consumer consumer) {
+		if (consumer == null) {
+			throw new DeviceNotFoundException("Consumer not found");
+		}
 		this.id = consumer.getId();
 		this.name = consumer.getName();
 		this.active = consumer.isActive();

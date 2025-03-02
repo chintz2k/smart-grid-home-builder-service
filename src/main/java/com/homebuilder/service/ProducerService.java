@@ -11,15 +11,13 @@ import java.util.Map;
  */
 public interface ProducerService {
 
-	Producer createProducerForUser(ProducerRequest request);
-	List<Producer> getAllProducersFromUser();
-	Producer getProducerByIdFromUser(Long producerId);
-	Producer updateProducerForUser(Long producerId, ProducerRequest request);
-	Map<String, String> archiveProducerForUser(Long producerId);
-	Map<String, String> deleteProducerForUser(Long producerId);
-
+	Producer createProducer(ProducerRequest request);
 	List<Producer> getAllProducers();
+	List<Producer> getAllProducersByOwner(Long ownerId);
 	Producer getProducerById(Long producerId);
-	Producer updateProducer(Long producerId, Producer request);
+	Producer updateProducer(ProducerRequest request);
+	Map<String, String> setActive(Producer producer, boolean active);
+	Map<String, String> archiveProducer(Long producerId);
+	Map<String, String> deleteProducer(Long producerId);
 
 }

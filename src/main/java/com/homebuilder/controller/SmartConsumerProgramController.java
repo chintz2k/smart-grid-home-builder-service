@@ -29,56 +29,50 @@ public class SmartConsumerProgramController {
 	}
 
 	@PostMapping
-	public ResponseEntity<SmartConsumerProgramResponse> createSmartConsumerProgramForUser(@Valid @RequestBody SmartConsumerProgramRequest request) {
-		SmartConsumerProgram smartConsumerProgram = smartConsumerProgramService.createSmartConsumerProgramForUser(request);
+	public ResponseEntity<SmartConsumerProgramResponse> createSmartConsumerProgram(@Valid @RequestBody SmartConsumerProgramRequest request) {
+		SmartConsumerProgram smartConsumerProgram = smartConsumerProgramService.createSmartConsumerProgram(request);
 		SmartConsumerProgramResponse dto = new SmartConsumerProgramResponse(smartConsumerProgram);
 		return ResponseEntity.status(HttpStatus.CREATED).body(dto);
 	}
 
-	@GetMapping
-	public ResponseEntity<List<SmartConsumerProgramResponse>> getAllSmartConsumerProgramsFromUser() {
-		List<SmartConsumerProgram> smartConsumerProgramList = smartConsumerProgramService.getAllSmartConsumerProgramsFromUser();
+	@GetMapping()
+	public ResponseEntity<List<SmartConsumerProgramResponse>> getAllSmartConsumerPrograms() {
+		List<SmartConsumerProgram> smartConsumerProgramList = smartConsumerProgramService.getAllSmartConsumerPrograms();
 		List<SmartConsumerProgramResponse> dtoList = smartConsumerProgramList.stream().map(SmartConsumerProgramResponse::new).toList();
 		return ResponseEntity.ok(dtoList);
 	}
 
 	@GetMapping("/{smartConsumerProgramId}")
-	public ResponseEntity<SmartConsumerProgramResponse> getSmartConsumerProgramByIdFromUser(@PathVariable Long smartConsumerProgramId) {
-		SmartConsumerProgram smartConsumerProgram = smartConsumerProgramService.getSmartConsumerProgramByIdFromUser(smartConsumerProgramId);
+	public ResponseEntity<SmartConsumerProgramResponse> getSmartConsumerProgramById(@PathVariable Long smartConsumerProgramId) {
+		SmartConsumerProgram smartConsumerProgram = smartConsumerProgramService.getSmartConsumerProgramById(smartConsumerProgramId);
 		SmartConsumerProgramResponse dto = new SmartConsumerProgramResponse(smartConsumerProgram);
 		return ResponseEntity.ok(dto);
 	}
 
-	@PutMapping("/{smartConsumerProgramId}")
-	public ResponseEntity<SmartConsumerProgramResponse> updateSmartConsumerProgramForUser(@PathVariable Long smartConsumerProgramId, @Valid @RequestBody SmartConsumerProgramRequest request) {
-		SmartConsumerProgram smartConsumerProgram = smartConsumerProgramService.updateSmartConsumerProgramForUser(smartConsumerProgramId, request);
+	@PutMapping("/update")
+	public ResponseEntity<SmartConsumerProgramResponse> updateSmartConsumerProgramForUser(@Valid @RequestBody SmartConsumerProgramRequest request) {
+		SmartConsumerProgram smartConsumerProgram = smartConsumerProgramService.updateSmartConsumerProgram(request);
 		SmartConsumerProgramResponse dto = new SmartConsumerProgramResponse(smartConsumerProgram);
 		return ResponseEntity.ok(dto);
 	}
 
 	@PutMapping("/{smartConsumerProgramId}/archive")
 	public ResponseEntity<Map<String, String>> archiveSmartConsumerProgramForUser(@PathVariable Long smartConsumerProgramId) {
-		Map<String, String> success = smartConsumerProgramService.archiveSmartConsumerProgramForUser(smartConsumerProgramId);
+		Map<String, String> success = smartConsumerProgramService.archiveSmartConsumerProgram(smartConsumerProgramId);
 		return ResponseEntity.ok().body(success);
 	}
 
 	@DeleteMapping("/{smartConsumerProgramId}")
 	public ResponseEntity<Map<String, String>> deleteSmartConsumerProgramForUser(@PathVariable Long smartConsumerProgramId) {
-		Map<String, String> success = smartConsumerProgramService.deleteSmartConsumerProgramForUser(smartConsumerProgramId);
+		Map<String, String> success = smartConsumerProgramService.deleteSmartConsumerProgram(smartConsumerProgramId);
 		return ResponseEntity.ok().body(success);
 	}
 
-	@GetMapping("/admin")
-	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<List<SmartConsumerProgram>> getAllSmartConsumerPrograms() {
-		List<SmartConsumerProgram> smartConsumerProgramList = smartConsumerProgramService.getAllSmartConsumerPrograms();
-		return ResponseEntity.ok(smartConsumerProgramList);
-	}
-
-	@GetMapping("/admin/{smartConsumerProgramId}")
-	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<SmartConsumerProgram> getSmartConsumerProgramById(@PathVariable Long smartConsumerProgramId) {
-		SmartConsumerProgram smartConsumerProgram = smartConsumerProgramService.getSmartConsumerProgramById(smartConsumerProgramId);
-		return ResponseEntity.ok(smartConsumerProgram);
+	@GetMapping("/owner")
+	@PreAuthorize("hasRole('ADMIN') or hasRole('SYSTEM')")
+	public ResponseEntity<List<SmartConsumerProgramResponse>> getAllSmartConsumerProgramsByOwner(@RequestParam Long ownerId) {
+		List<SmartConsumerProgram> smartConsumerProgramList = smartConsumerProgramService.getAllSmartConsumerProgramsByOwner(ownerId);
+		List<SmartConsumerProgramResponse> dtoList = smartConsumerProgramList.stream().map(SmartConsumerProgramResponse::new).toList();
+		return ResponseEntity.ok(dtoList);
 	}
 }

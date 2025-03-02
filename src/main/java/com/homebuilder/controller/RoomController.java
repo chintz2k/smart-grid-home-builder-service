@@ -29,60 +29,56 @@ public class RoomController {
 	}
 
 	@PostMapping
-	public ResponseEntity<RoomResponse> createRoomForUser(@Valid @RequestBody RoomRequest request) {
-		Room room = roomService.createRoomForUser(request);
+	public ResponseEntity<RoomResponse> createRoom(@Valid @RequestBody RoomRequest request) {
+		Room room = roomService.createRoom(request);
 		RoomResponse dto = new RoomResponse(room);
 		return ResponseEntity.status(HttpStatus.CREATED).body(dto);
 	}
 
 	@GetMapping
-	public ResponseEntity<List<RoomResponse>> getAllRoomsFromUser() {
-		List<Room> roomList = roomService.getAllRoomsFromUser();
+	public ResponseEntity<List<RoomResponse>> getAllRooms() {
+		List<Room> roomList = roomService.getAllRooms();
 		List<RoomResponse> dtoList = roomList.stream().map(RoomResponse::new).toList();
 		return ResponseEntity.ok(dtoList);
 	}
 
 	@GetMapping("/{roomId}")
-	public ResponseEntity<RoomResponse> getRoomByIdFromUser(@PathVariable Long roomId) {
-		Room room = roomService.getRoomByIdFromUser(roomId);
+	public ResponseEntity<RoomResponse> getRoomById(@PathVariable Long roomId) {
+		Room room = roomService.getRoomById(roomId);
 		RoomResponse dto = new RoomResponse(room);
 		return ResponseEntity.ok(dto);
 	}
 
-	@PutMapping("/{roomId}")
-	public ResponseEntity<RoomResponse> updateRoomForUser(@PathVariable Long roomId, @Valid @RequestBody RoomRequest request) {
-		Room room = roomService.updateRoomForUser(roomId, request);
+	@PutMapping("/update")
+	public ResponseEntity<RoomResponse> updateRoom(@Valid @RequestBody RoomRequest request) {
+		Room room = roomService.updateRoom(request);
 		RoomResponse dto = new RoomResponse(room);
 		return ResponseEntity.ok(dto);
 	}
 
 	@DeleteMapping("/{roomId}")
-	public ResponseEntity<Map<String, String>> deleteRoomForUser(@PathVariable Long roomId) {
-		Map<String, String> success = roomService.deleteRoomForUser(roomId);
+	public ResponseEntity<Map<String, String>> deleteRoom(@PathVariable Long roomId) {
+		Map<String, String> success = roomService.deleteRoom(roomId);
 		return ResponseEntity.ok().body(success);
 	}
 
 	@PutMapping("/{roomId}/add-device")
 	public ResponseEntity<Map<String, String>> addDeviceToRoom(@PathVariable Long roomId, @RequestParam Long deviceId) {
-		Map<String, String> success = roomService.assignDeviceToRoomForUser(roomId, deviceId);
+		Map<String, String> success = roomService.assignDeviceToRoom(roomId, deviceId);
 		return ResponseEntity.ok().body(success);
 	}
 
 	@PutMapping("/{roomId}/remove-device")
 	public ResponseEntity<Map<String, String>> removeDeviceFromRoom(@PathVariable Long roomId, @RequestParam Long deviceId) {
-		Map<String, String> success = roomService.removeDeviceFromRoomForUser(roomId, deviceId);
+		Map<String, String> success = roomService.removeDeviceFromRoom(roomId, deviceId);
 		return ResponseEntity.ok().body(success);
 	}
 
-	@GetMapping("/admin")
-	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<List<Room>> getAllRooms() {
-		return ResponseEntity.ok(roomService.getAllRooms());
-	}
-
-	@GetMapping("/admin/{roomId}")
-	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<Room> getRoomById(@PathVariable Long roomId) {
-		return ResponseEntity.ok(roomService.getRoomById(roomId));
+	@GetMapping("/owner")
+	@PreAuthorize("hasRole('ADMIN') or hasRole('SYSTEM')")
+	public ResponseEntity<List<RoomResponse>> getAllRoomsByOwner(@RequestParam Long ownerId) {
+		List<Room> roomList = roomService.getAllRoomsByOwner(ownerId);
+		List<RoomResponse> dtoList = roomList.stream().map(RoomResponse::new).toList();
+		return ResponseEntity.ok(dtoList);
 	}
 }

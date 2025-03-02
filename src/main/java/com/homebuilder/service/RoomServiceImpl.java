@@ -3,16 +3,21 @@ package com.homebuilder.service;
 import com.homebuilder.dto.RoomRequest;
 import com.homebuilder.entity.Device;
 import com.homebuilder.entity.Room;
+import com.homebuilder.exception.CreateDeviceFailedException;
 import com.homebuilder.exception.DeviceNotFoundException;
 import com.homebuilder.exception.UnauthorizedAccessException;
 import com.homebuilder.repository.RoomRepository;
 import com.homebuilder.security.SecurityService;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author André Heinen
@@ -20,9 +25,11 @@ import java.util.Map;
 @Service
 public class RoomServiceImpl implements RoomService {
 
-	private final RoomRepository roomRepository;
+	private static final Logger logger = LoggerFactory.getLogger(RoomServiceImpl.class);
 
+	private final RoomRepository roomRepository;
 	private final DeviceService deviceService;
+
 	private final SecurityService securityService;
 
 	@Autowired
@@ -33,102 +40,134 @@ public class RoomServiceImpl implements RoomService {
 	}
 
 	@Override
-	public Room createRoomForUser(@Valid RoomRequest request) {
-		Long userId = securityService.getCurrentUserId();
+	public Room createRoom(@Valid RoomRequest request) {
 		Room room = request.toEntity();
-		room.setUserId(userId);
+		if (securityService.isCurrentUserAdminOrSystem()) {
+			if (request.getOwnerId() == null) {
+				throw new CreateDeviceFailedException("Owner ID must be provided when creating Room as System User");
+			} else {
+				room.setUserId(request.getOwnerId());
+			}
+		} else {
+			room.setUserId(securityService.getCurrentUserId());
+		}
 		roomRepository.save(room);
 		return room;
-	}
-
-	@Override
-	public List<Room> getAllRoomsFromUser() {
-		Long userId = securityService.getCurrentUserId();
-		List<Room> roomList = roomRepository.findByUserId(userId);
-		if (roomList.isEmpty()) {
-			throw new DeviceNotFoundException("No Rooms found for User with ID " + userId);
-		}
-		return roomList;
-	}
-
-	@Override
-	public Room getRoomByIdFromUser(Long roomId) {
-		Long userId = securityService.getCurrentUserId();
-		Room room = roomRepository.findById(roomId).orElseThrow(() -> new DeviceNotFoundException("Room with ID " + roomId + " not found"));
-		if (!room.getUserId().equals(userId)) {
-			throw new UnauthorizedAccessException("Unauthorized access to room with ID " + roomId);
-		}
-		return room;
-	}
-
-	@Override
-	public Room updateRoomForUser(Long existingRoomId, @Valid RoomRequest request) {
-		Long userId = securityService.getCurrentUserId();
-		Room existingRoom = getRoomByIdFromUser(existingRoomId);
-		if (!existingRoom.getUserId().equals(userId)) {
-			throw new UnauthorizedAccessException("Unauthorized access to room with ID " + existingRoomId);
-		}
-		existingRoom.setName(request.getName());
-		roomRepository.save(existingRoom);
-		return existingRoom;
-	}
-
-	@Override
-	public Map<String, String> deleteRoomForUser(Long roomId) {
-		Long userId = securityService.getCurrentUserId();
-		Room room = getRoomByIdFromUser(roomId);
-		if (!room.getUserId().equals(userId)) {
-			throw new UnauthorizedAccessException("Unauthorized access to room with ID " + roomId);
-		}
-		Map<String, String> response = Map.of(
-				"message", "Successfully deleted SmartConsumer with ID " + roomId,
-				"id", roomId.toString()
-		);
-		roomRepository.delete(room);
-		return response;
-	}
-
-	@Override
-	public Map<String, String> assignDeviceToRoomForUser(Long roomId, Long deviceId) {
-		Long userId = securityService.getCurrentUserId();
-		Room room = getRoomByIdFromUser(roomId);
-		if (!room.getUserId().equals(userId)) {
-			throw new UnauthorizedAccessException("Unauthorized access to room with ID " + roomId);
-		}
-		Device device = deviceService.getDeviceByIdFromUser(deviceId);
-		room.addDevice(device);
-		Map<String, String> response = Map.of(
-				"message", "Successfully assigned device with ID " + deviceId + " to room with ID " + roomId,
-				"id", roomId.toString()
-		);
-		roomRepository.save(room);
-		return response;
-	}
-
-	@Override
-	public Map<String, String> removeDeviceFromRoomForUser(Long roomId, Long deviceId) {
-		Long userId = securityService.getCurrentUserId();
-		Room room = getRoomByIdFromUser(roomId);
-		if (!room.getUserId().equals(userId)) {
-			throw new UnauthorizedAccessException("Unauthorized access to room with ID " + roomId);
-		}
-		Device device = deviceService.getDeviceByIdFromUser(deviceId);
-		room.removeDevice(device);
-		Map<String, String> response = Map.of(
-				"message", "Successfully removed device with ID " + deviceId + " from room with ID " + roomId,
-				"id", roomId.toString()
-		);
-		roomRepository.save(room);
-		return response;
 	}
 
 	@Override
 	public List<Room> getAllRooms() {
-		return roomRepository.findAll();
+		if (securityService.isCurrentUserAdminOrSystem()) {
+			return roomRepository.findAll(PageRequest.of(0, 1000)).getContent();
+		}
+		Long userId = securityService.getCurrentUserId();
+		return roomRepository.findByUserId(userId);
+	}
+
+	@Override
+	public List<Room> getAllRoomsByOwner(Long ownerId) {
+		if (securityService.isCurrentUserAdminOrSystem()) {
+			return roomRepository.findByUserId(ownerId);
+		} else {
+			throw new UnauthorizedAccessException("Unauthorized access to Rooms for Owner with ID " + ownerId);
+		}
 	}
 
 	@Override
 	public Room getRoomById(Long roomId) {
-		return roomRepository.findById(roomId).orElseThrow(() -> new DeviceNotFoundException("Room with ID " + roomId + " not found"));
+		Room room = roomRepository.findById(roomId).orElse(null);
+		if (room != null) {
+			if (securityService.canAccessRoom(room)) {
+				return room;
+			} else {
+				throw new UnauthorizedAccessException("Unauthorized access to room with ID " + roomId);
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public Room updateRoom(@Valid RoomRequest request) {
+		if (request.getId() == null) {
+			throw new CreateDeviceFailedException("Room ID must be provided when updating Room");
+		}
+		Room room = roomRepository.findById(request.getId()).orElse(null);
+		if (room != null) {
+			if (securityService.canAccessRoom(room)) {
+				if (!Objects.equals(request.getName(), room.getName())) {
+					room.setName(request.getName());
+					roomRepository.save(room);
+					return room;
+				}
+				throw new CreateDeviceFailedException("No changes detected in Room");
+			}
+			throw new UnauthorizedAccessException("Unauthorized access to room with ID " + request.getId());
+		}
+		return null;
+	}
+
+	@Override
+	public Map<String, String> deleteRoom(Long roomId) {
+		Room room = roomRepository.findById(roomId).orElse(null);
+		if (room != null) {
+			if (securityService.canAccessRoom(room)) {
+				Map<String, String> response = Map.of(
+						"message", "Successfully deleted room with ID " + roomId,
+						"id", roomId.toString()
+				);
+				roomRepository.delete(room);
+				return response;
+			}
+			throw new UnauthorizedAccessException("Unauthorized access to room with ID " + roomId);
+		}
+		return null;
+	}
+
+	@Override
+	public Map<String, String> assignDeviceToRoom(Long roomId, Long deviceId) {
+		Room room = roomRepository.findById(roomId).orElse(null);
+		if (room != null) {
+			if (securityService.canAccessRoom(room)) {
+				Device device = deviceService.getDeviceById(deviceId);
+				if (device == null) {
+					throw new DeviceNotFoundException("Device with ID " + deviceId + " not found");
+				}
+				if (room.getDevices().contains(device)) {
+					throw new CreateDeviceFailedException("Device with ID " + deviceId + " is already assigned to room with ID " + roomId);
+				}
+				room.addDevice(device);
+				roomRepository.save(room);
+				return Map.of(
+						"message", "Successfully assigned device with ID " + deviceId + " to room with ID " + roomId,
+						"id", roomId.toString()
+				);
+			}
+			throw new UnauthorizedAccessException("Unauthorized access to room with ID " + roomId);
+		}
+		throw new DeviceNotFoundException("Room with ID " + roomId + " not found");
+	}
+
+	@Override
+	public Map<String, String> removeDeviceFromRoom(Long roomId, Long deviceId) {
+		Room room = roomRepository.findById(roomId).orElse(null);
+		if (room != null) {
+			if (securityService.canAccessRoom(room)) {
+				Device device = deviceService.getDeviceById(deviceId);
+				if (device == null) {
+					throw new DeviceNotFoundException("Device with ID " + deviceId + " not found");
+				}
+				if (!room.getDevices().contains(device)) {
+					throw new CreateDeviceFailedException("Device with ID " + deviceId + " is not assigned to room with ID " + roomId);
+				}
+				room.removeDevice(device);
+				roomRepository.save(room);
+				return Map.of(
+						"message", "Successfully removed device with ID " + deviceId + " from room with ID " + roomId,
+						"id", roomId.toString()
+				);
+			}
+			throw new UnauthorizedAccessException("Unauthorized access to room with ID " + roomId);
+		}
+		throw new DeviceNotFoundException("Room with ID " + roomId + " not found");
 	}
 }

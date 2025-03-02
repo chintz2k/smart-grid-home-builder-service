@@ -1,6 +1,7 @@
 package com.homebuilder.dto;
 
 import com.homebuilder.entity.SmartConsumerProgram;
+import com.homebuilder.exception.DeviceNotFoundException;
 
 /**
  * @author André Heinen
@@ -15,6 +16,9 @@ public class SmartConsumerProgramResponse {
 	private final boolean archived;
 
 	public SmartConsumerProgramResponse(SmartConsumerProgram smartConsumerProgram) {
+		if (smartConsumerProgram == null) {
+			throw new DeviceNotFoundException("SmartConsumerProgram not found");
+		}
 		this.id = smartConsumerProgram.getId();
 		this.name = smartConsumerProgram.getName();
 		this.durationInSeconds = smartConsumerProgram.getDurationInSeconds();
