@@ -13,6 +13,7 @@ public interface ProducerService {
 
 	Producer createProducer(ProducerRequest request);
 	List<Producer> getAllProducers();
+	List<Producer> getAllUnarchivedProducers();
 	List<Producer> getAllProducersByOwner(Long ownerId);
 	Producer getProducerById(Long producerId);
 	Producer updateProducer(ProducerRequest request);

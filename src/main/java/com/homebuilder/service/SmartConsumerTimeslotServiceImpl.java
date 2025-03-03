@@ -5,6 +5,7 @@ import com.homebuilder.entity.SmartConsumer;
 import com.homebuilder.entity.SmartConsumerProgram;
 import com.homebuilder.entity.SmartConsumerTimeslot;
 import com.homebuilder.exception.DeviceNotFoundException;
+import com.homebuilder.exception.SmartProgramNotAllowedForSmartConsumerException;
 import com.homebuilder.exception.TimeslotOverlapException;
 import com.homebuilder.exception.UnauthorizedAccessException;
 import com.homebuilder.repository.SmartConsumerProgramRepository;
@@ -15,6 +16,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -40,6 +42,7 @@ public class SmartConsumerTimeslotServiceImpl implements SmartConsumerTimeslotSe
 	}
 
 	@Override
+	@Transactional
 	public SmartConsumerTimeslot createSmartConsumerTimeslot(@Valid SmartConsumerTimeslotRequest request) {
 		SmartConsumerTimeslot timeslot = request.toEntity();
 		if (securityService.isCurrentUserAdminOrSystem()) {
@@ -57,6 +60,9 @@ public class SmartConsumerTimeslotServiceImpl implements SmartConsumerTimeslotSe
 				SmartConsumerProgram program = smartConsumerProgramRepository.findById(request.getSmartConsumerProgramId()).orElse(null);
 				if (program != null) {
 					if (securityService.canAccessProgram(program)) {
+						if (!smartConsumer.getProgramList().contains(program)) {
+							throw new SmartProgramNotAllowedForSmartConsumerException("This Program is not executable on this SmartConsumer");
+						}
 						timeslot.setSmartConsumerProgram(program);
 						timeslot.setStartTime(request.getStartTimeAsInstant());
 						int durationInSeconds = program.getDurationInSeconds();
@@ -81,6 +87,7 @@ public class SmartConsumerTimeslotServiceImpl implements SmartConsumerTimeslotSe
 	}
 
 	@Override
+	@Transactional(readOnly = true)
 	public List<SmartConsumerTimeslot> getAllSmartConsumerTimeslots() {
 		if (securityService.isCurrentUserAdminOrSystem()) {
 			return smartConsumerTimeslotRepository.findAll(PageRequest.of(0, 1000)).getContent();
@@ -90,6 +97,7 @@ public class SmartConsumerTimeslotServiceImpl implements SmartConsumerTimeslotSe
 	}
 
 	@Override
+	@Transactional(readOnly = true)
 	public List<SmartConsumerTimeslot> getAllSmartConsumerTimeslotsByOwner(Long ownerId) {
 		if (securityService.isCurrentUserAdminOrSystem()) {
 			return smartConsumerTimeslotRepository.findByUserId(ownerId);
@@ -99,6 +107,7 @@ public class SmartConsumerTimeslotServiceImpl implements SmartConsumerTimeslotSe
 	}
 
 	@Override
+	@Transactional(readOnly = true)
 	public SmartConsumerTimeslot getSmartConsumerTimeslotById(Long smartConsumerTimeslotId) {
 		SmartConsumerTimeslot timeslot = smartConsumerTimeslotRepository.findById(smartConsumerTimeslotId).orElse(null);
 		if (timeslot != null) {
@@ -111,6 +120,7 @@ public class SmartConsumerTimeslotServiceImpl implements SmartConsumerTimeslotSe
 	}
 
 	@Override
+	@Transactional
 	public SmartConsumerTimeslot updateSmartConsumerTimeslot(@Valid SmartConsumerTimeslotRequest request) {
 		if (request.getId() == null) {
 			throw new DeviceNotFoundException("SmartConsumerTimeslot ID must be provided when updating SmartConsumerTimeslot");
@@ -124,6 +134,9 @@ public class SmartConsumerTimeslotServiceImpl implements SmartConsumerTimeslotSe
 						SmartConsumerProgram program = smartConsumerProgramRepository.findById(request.getSmartConsumerProgramId()).orElse(null);
 						if (program != null) {
 							if (securityService.canAccessProgram(program)) {
+								if (!smartConsumer.getProgramList().contains(program)) {
+									throw new SmartProgramNotAllowedForSmartConsumerException("This Program is not executable on this SmartConsumer");
+								}
 								timeslot.setSmartConsumer(smartConsumer);
 								timeslot.setSmartConsumerProgram(program);
 								timeslot.setStartTime(request.getStartTimeAsInstant());
@@ -146,6 +159,7 @@ public class SmartConsumerTimeslotServiceImpl implements SmartConsumerTimeslotSe
 	}
 
 	@Override
+	@Transactional
 	public Map<String, String> deleteSmartConsumerTimeslot(Long smartConsumerTimeslotId) {
 		SmartConsumerTimeslot timeslot = smartConsumerTimeslotRepository.findById(smartConsumerTimeslotId).orElse(null);
 		if (timeslot != null) {

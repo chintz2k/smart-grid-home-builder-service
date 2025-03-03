@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
@@ -43,6 +44,7 @@ public class SmartConsumerServiceImpl implements SmartConsumerService {
     }
 
     @Override
+    @Transactional
     public SmartConsumer createSmartConsumer(@Valid SmartConsumerRequest request) {
         SmartConsumer smartConsumer = request.toEntity();
         if (securityService.isCurrentUserAdminOrSystem()) {
@@ -59,6 +61,7 @@ public class SmartConsumerServiceImpl implements SmartConsumerService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<SmartConsumer> getAllSmartConsumers() {
         if (securityService.isCurrentUserAdminOrSystem()) {
             return smartConsumerRepository.findAll(PageRequest.of(0, 1000)).getContent();
@@ -68,6 +71,17 @@ public class SmartConsumerServiceImpl implements SmartConsumerService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<SmartConsumer> getAllUnarchivedSmartConsumers() {
+        if (securityService.isCurrentUserAdminOrSystem()) {
+            return smartConsumerRepository.findAllByArchivedFalse(PageRequest.of(0, 1000)).getContent();
+        }
+        Long userId = securityService.getCurrentUserId();
+        return smartConsumerRepository.findAllByUserIdAndArchivedFalse(userId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<SmartConsumer> getAllSmartConsumersByOwner(Long ownerId) {
         if (securityService.isCurrentUserAdminOrSystem()) {
             return smartConsumerRepository.findByUserId(ownerId);
@@ -77,6 +91,7 @@ public class SmartConsumerServiceImpl implements SmartConsumerService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public SmartConsumer getSmartConsumerById(Long smartConsumerId) {
         SmartConsumer smartConsumer = smartConsumerRepository.findById(smartConsumerId).orElse(null);
         if (smartConsumer != null) {
@@ -90,6 +105,7 @@ public class SmartConsumerServiceImpl implements SmartConsumerService {
     }
 
     @Override
+    @Transactional
     public SmartConsumer updateSmartConsumer(@Valid SmartConsumerRequest request) {
         if (request.getId() == null) {
             throw new CreateDeviceFailedException("SmartConsumer ID must be provided when updating SmartConsumer");
@@ -121,6 +137,7 @@ public class SmartConsumerServiceImpl implements SmartConsumerService {
     }
 
     @Override
+    @Transactional
     public Map<String, String> setActive(SmartConsumer smartConsumer, boolean active) {
         if (smartConsumer != null) {
             if (securityService.canAccessDevice(smartConsumer)) {
@@ -155,6 +172,7 @@ public class SmartConsumerServiceImpl implements SmartConsumerService {
     }
 
     @Override
+    @Transactional
     public Map<String, String> archiveSmartConsumer(Long smartConsumerId) {
         SmartConsumer smartConsumer = smartConsumerRepository.findById(smartConsumerId).orElse(null);
         if (smartConsumer != null) {
@@ -180,6 +198,7 @@ public class SmartConsumerServiceImpl implements SmartConsumerService {
     }
 
     @Override
+    @Transactional
     public Map<String, String> deleteSmartConsumer(Long smartConsumerId) {
         SmartConsumer smartConsumer = smartConsumerRepository.findById(smartConsumerId).orElse(null);
         if (smartConsumer != null) {

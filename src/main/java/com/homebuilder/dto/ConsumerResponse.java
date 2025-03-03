@@ -10,6 +10,7 @@ public class ConsumerResponse {
 
 	private final Long id;
 	private final String name;
+	private final Long ownerId;
 	private final boolean active;
 	private final boolean archived;
 	private final double powerConsumption;
@@ -20,6 +21,7 @@ public class ConsumerResponse {
 		}
 		this.id = consumer.getId();
 		this.name = consumer.getName();
+		this.ownerId = consumer.getUserId();
 		this.active = consumer.isActive();
 		this.archived = consumer.isArchived();
 		this.powerConsumption = consumer.getPowerConsumption();
@@ -31,6 +33,10 @@ public class ConsumerResponse {
 
 	public String getName() {
 		return name;
+	}
+
+	public Long getOwnerId() {
+		return ownerId;
 	}
 
 	public boolean isActive() {

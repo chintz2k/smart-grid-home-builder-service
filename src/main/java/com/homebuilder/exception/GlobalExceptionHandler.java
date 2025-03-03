@@ -93,6 +93,13 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
 	}
 
+	@ExceptionHandler(SmartProgramNotAllowedForSmartConsumerException.class)
+	public ResponseEntity<Map<String, String>> handleSmartProgramNotAllowedForSmartConsumerException(SmartProgramNotAllowedForSmartConsumerException ex) {
+		Map<String, String> error = new HashMap<>();
+		error.put("error", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+	}
+
 	@ExceptionHandler(TimeslotOverlapException.class)
 	public ResponseEntity<Map<String, Object>> handleTimeslotOverlapException(TimeslotOverlapException ex, WebRequest request) {
 		Map<String, Object> error = new HashMap<>();

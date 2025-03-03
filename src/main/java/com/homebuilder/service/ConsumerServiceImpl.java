@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
@@ -43,6 +44,7 @@ public class ConsumerServiceImpl implements ConsumerService {
 	}
 
 	@Override
+	@Transactional
 	public Consumer createConsumer(@Valid ConsumerRequest request) {
 		Consumer consumer = request.toEntity();
 		if (securityService.isCurrentUserAdminOrSystem()) {
@@ -59,6 +61,7 @@ public class ConsumerServiceImpl implements ConsumerService {
 	}
 
 	@Override
+	@Transactional(readOnly = true)
 	public List<Consumer> getAllConsumers() {
 		if (securityService.isCurrentUserAdminOrSystem()) {
 			return consumerRepository.findAll(PageRequest.of(0, 1000)).getContent();
@@ -68,6 +71,17 @@ public class ConsumerServiceImpl implements ConsumerService {
 	}
 
 	@Override
+	@Transactional(readOnly = true)
+	public List<Consumer> getAllUnarchivedConsumers() {
+		if (securityService.isCurrentUserAdminOrSystem()) {
+			return consumerRepository.findAllByArchivedFalse(PageRequest.of(0, 1000)).getContent();
+		}
+		Long userId = securityService.getCurrentUserId();
+		return consumerRepository.findAllByUserIdAndArchivedFalse(userId);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
 	public List<Consumer> getAllConsumersByOwner(Long ownerId) {
 		if (securityService.isCurrentUserAdminOrSystem()) {
 			return consumerRepository.findByUserId(ownerId);
@@ -77,6 +91,7 @@ public class ConsumerServiceImpl implements ConsumerService {
 	}
 
 	@Override
+	@Transactional(readOnly = true)
 	public Consumer getConsumerById(Long consumerId) {
 		Consumer consumer = consumerRepository.findById(consumerId).orElse(null);
 		if (consumer != null) {
@@ -90,6 +105,7 @@ public class ConsumerServiceImpl implements ConsumerService {
 	}
 
 	@Override
+	@Transactional
 	public Consumer updateConsumer(@Valid ConsumerRequest request) {
 		if (request.getId() == null) {
 			throw new CreateDeviceFailedException("Consumer ID must be provided when updating Consumer");
@@ -121,6 +137,7 @@ public class ConsumerServiceImpl implements ConsumerService {
 	}
 
 	@Override
+	@Transactional
 	public Map<String, String> setActive(Consumer consumer, boolean active) {
 		if (consumer != null) {
 			if (securityService.canAccessDevice(consumer)) {
@@ -155,6 +172,7 @@ public class ConsumerServiceImpl implements ConsumerService {
 	}
 
 	@Override
+	@Transactional
 	public Map<String, String> archiveConsumer(Long consumerId) {
 		Consumer consumer = consumerRepository.findById(consumerId).orElse(null);
 		if (consumer != null) {
@@ -180,6 +198,7 @@ public class ConsumerServiceImpl implements ConsumerService {
 	}
 
 	@Override
+	@Transactional
 	public Map<String, String> deleteConsumer(Long consumerId) {
 		Consumer consumer = consumerRepository.findById(consumerId).orElse(null);
 		if (consumer != null) {

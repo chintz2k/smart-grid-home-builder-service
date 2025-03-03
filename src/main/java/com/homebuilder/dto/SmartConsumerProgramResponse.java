@@ -10,10 +10,11 @@ public class SmartConsumerProgramResponse {
 
 	private final Long id;
 	private final String name;
+	private final Long ownerId;
+	private final boolean archived;
+	private final Long smartConsumerId;
 	private final int durationInSeconds;
 	private final double powerConsumption;
-	private final Long smartConsumerId;
-	private final boolean archived;
 
 	public SmartConsumerProgramResponse(SmartConsumerProgram smartConsumerProgram) {
 		if (smartConsumerProgram == null) {
@@ -21,10 +22,11 @@ public class SmartConsumerProgramResponse {
 		}
 		this.id = smartConsumerProgram.getId();
 		this.name = smartConsumerProgram.getName();
+		this.ownerId = smartConsumerProgram.getUserId();
+		this.archived = smartConsumerProgram.isArchived();
+		this.smartConsumerId = smartConsumerProgram.getSmartConsumer().getId();
 		this.durationInSeconds = smartConsumerProgram.getDurationInSeconds();
 		this.powerConsumption = smartConsumerProgram.getPowerConsumption();
-		this.smartConsumerId = smartConsumerProgram.getSmartConsumer().getId();
-		this.archived = smartConsumerProgram.isArchived();
 	}
 
 	public Long getId() {
@@ -35,19 +37,23 @@ public class SmartConsumerProgramResponse {
 		return name;
 	}
 
-	public int getDurationInSeconds() {
-		return durationInSeconds;
+	public Long getOwnerId() {
+		return ownerId;
 	}
 
-	public double getPowerConsumption() {
-		return powerConsumption;
+	public boolean isArchived() {
+		return archived;
 	}
 
 	public Long getSmartConsumerId() {
 		return smartConsumerId;
 	}
 
-	public boolean isArchived() {
-		return archived;
+	public int getDurationInSeconds() {
+		return durationInSeconds;
+	}
+
+	public double getPowerConsumption() {
+		return powerConsumption;
 	}
 }

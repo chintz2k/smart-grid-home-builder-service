@@ -9,11 +9,10 @@ import com.homebuilder.exception.UnauthorizedAccessException;
 import com.homebuilder.repository.RoomRepository;
 import com.homebuilder.security.SecurityService;
 import jakarta.validation.Valid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -24,8 +23,6 @@ import java.util.Objects;
  */
 @Service
 public class RoomServiceImpl implements RoomService {
-
-	private static final Logger logger = LoggerFactory.getLogger(RoomServiceImpl.class);
 
 	private final RoomRepository roomRepository;
 	private final DeviceService deviceService;
@@ -40,6 +37,7 @@ public class RoomServiceImpl implements RoomService {
 	}
 
 	@Override
+	@Transactional
 	public Room createRoom(@Valid RoomRequest request) {
 		Room room = request.toEntity();
 		if (securityService.isCurrentUserAdminOrSystem()) {
@@ -56,6 +54,7 @@ public class RoomServiceImpl implements RoomService {
 	}
 
 	@Override
+	@Transactional(readOnly = true)
 	public List<Room> getAllRooms() {
 		if (securityService.isCurrentUserAdminOrSystem()) {
 			return roomRepository.findAll(PageRequest.of(0, 1000)).getContent();
@@ -65,6 +64,7 @@ public class RoomServiceImpl implements RoomService {
 	}
 
 	@Override
+	@Transactional(readOnly = true)
 	public List<Room> getAllRoomsByOwner(Long ownerId) {
 		if (securityService.isCurrentUserAdminOrSystem()) {
 			return roomRepository.findByUserId(ownerId);
@@ -74,6 +74,7 @@ public class RoomServiceImpl implements RoomService {
 	}
 
 	@Override
+	@Transactional(readOnly = true)
 	public Room getRoomById(Long roomId) {
 		Room room = roomRepository.findById(roomId).orElse(null);
 		if (room != null) {
@@ -87,6 +88,7 @@ public class RoomServiceImpl implements RoomService {
 	}
 
 	@Override
+	@Transactional
 	public Room updateRoom(@Valid RoomRequest request) {
 		if (request.getId() == null) {
 			throw new CreateDeviceFailedException("Room ID must be provided when updating Room");
@@ -107,6 +109,7 @@ public class RoomServiceImpl implements RoomService {
 	}
 
 	@Override
+	@Transactional
 	public Map<String, String> deleteRoom(Long roomId) {
 		Room room = roomRepository.findById(roomId).orElse(null);
 		if (room != null) {
@@ -124,6 +127,7 @@ public class RoomServiceImpl implements RoomService {
 	}
 
 	@Override
+	@Transactional
 	public Map<String, String> assignDeviceToRoom(Long roomId, Long deviceId) {
 		Room room = roomRepository.findById(roomId).orElse(null);
 		if (room != null) {
@@ -148,6 +152,7 @@ public class RoomServiceImpl implements RoomService {
 	}
 
 	@Override
+	@Transactional
 	public Map<String, String> removeDeviceFromRoom(Long roomId, Long deviceId) {
 		Room room = roomRepository.findById(roomId).orElse(null);
 		if (room != null) {

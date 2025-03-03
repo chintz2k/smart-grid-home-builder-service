@@ -36,6 +36,13 @@ public class SmartConsumerProgramController {
 	}
 
 	@GetMapping()
+	public ResponseEntity<List<SmartConsumerProgramResponse>> getAllUnarchivedSmartConsumerPrograms() {
+		List<SmartConsumerProgram> smartConsumerProgramList = smartConsumerProgramService.getAllUnarchivedSmartConsumerPrograms();
+		List<SmartConsumerProgramResponse> dtoList = smartConsumerProgramList.stream().map(SmartConsumerProgramResponse::new).toList();
+		return ResponseEntity.ok(dtoList);
+	}
+
+	@GetMapping("/all")
 	public ResponseEntity<List<SmartConsumerProgramResponse>> getAllSmartConsumerPrograms() {
 		List<SmartConsumerProgram> smartConsumerProgramList = smartConsumerProgramService.getAllSmartConsumerPrograms();
 		List<SmartConsumerProgramResponse> dtoList = smartConsumerProgramList.stream().map(SmartConsumerProgramResponse::new).toList();

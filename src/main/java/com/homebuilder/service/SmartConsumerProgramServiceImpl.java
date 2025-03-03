@@ -13,6 +13,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -37,6 +38,7 @@ public class SmartConsumerProgramServiceImpl implements SmartConsumerProgramServ
 	}
 
 	@Override
+	@Transactional
 	public SmartConsumerProgram createSmartConsumerProgram(@Valid SmartConsumerProgramRequest request) {
 		SmartConsumerProgram smartConsumerProgram = request.toEntity();
 		if (securityService.isCurrentUserAdminOrSystem()) {
@@ -63,6 +65,7 @@ public class SmartConsumerProgramServiceImpl implements SmartConsumerProgramServ
 	}
 
 	@Override
+	@Transactional(readOnly = true)
 	public List<SmartConsumerProgram> getAllSmartConsumerPrograms() {
 		if (securityService.isCurrentUserAdminOrSystem()) {
 			return smartConsumerProgramRepository.findAll(PageRequest.of(0, 1000)).getContent();
@@ -72,6 +75,17 @@ public class SmartConsumerProgramServiceImpl implements SmartConsumerProgramServ
 	}
 
 	@Override
+	@Transactional(readOnly = true)
+	public List<SmartConsumerProgram> getAllUnarchivedSmartConsumerPrograms() {
+		if (securityService.isCurrentUserAdminOrSystem()) {
+			return smartConsumerProgramRepository.findAllByArchivedFalse(PageRequest.of(0, 1000)).getContent();
+		}
+		Long userId = securityService.getCurrentUserId();
+		return smartConsumerProgramRepository.findAllByUserIdAndArchivedFalse(userId);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
 	public List<SmartConsumerProgram> getAllSmartConsumerProgramsByOwner(Long ownerId) {
 		if (securityService.isCurrentUserAdminOrSystem()) {
 			return smartConsumerProgramRepository.findByUserId(ownerId);
@@ -81,6 +95,7 @@ public class SmartConsumerProgramServiceImpl implements SmartConsumerProgramServ
 	}
 
 	@Override
+	@Transactional(readOnly = true)
 	public SmartConsumerProgram getSmartConsumerProgramById(Long smartConsumerProgramId) {
 		SmartConsumerProgram smartConsumerProgram = smartConsumerProgramRepository.findById(smartConsumerProgramId).orElse(null);
 		if (smartConsumerProgram != null) {
@@ -94,6 +109,7 @@ public class SmartConsumerProgramServiceImpl implements SmartConsumerProgramServ
 	}
 
 	@Override
+	@Transactional
 	public SmartConsumerProgram updateSmartConsumerProgram(@Valid SmartConsumerProgramRequest request) {
 		if (request.getId() == null) {
 			throw new CreateDeviceFailedException("SmartConsumerProgram ID must be provided when updating SmartConsumerProgram");
@@ -123,6 +139,7 @@ public class SmartConsumerProgramServiceImpl implements SmartConsumerProgramServ
 	}
 
 	@Override
+	@Transactional
 	public Map<String, String> archiveSmartConsumerProgram(Long smartConsumerProgramId) {
 		SmartConsumerProgram program = smartConsumerProgramRepository.findById(smartConsumerProgramId).orElse(null);
 		if (program != null) {
@@ -144,6 +161,7 @@ public class SmartConsumerProgramServiceImpl implements SmartConsumerProgramServ
 	}
 
 	@Override
+	@Transactional
 	public Map<String, String> deleteSmartConsumerProgram(Long smartConsumerProgramId) {
 		SmartConsumerProgram program = smartConsumerProgramRepository.findById(smartConsumerProgramId).orElse(null);
 		if (program != null) {

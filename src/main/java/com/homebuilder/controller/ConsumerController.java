@@ -36,6 +36,13 @@ public class ConsumerController {
 	}
 
 	@GetMapping
+	public ResponseEntity<List<ConsumerResponse>> getAllUnarchivedConsumers() {
+		List<Consumer> consumerList = consumerService.getAllUnarchivedConsumers();
+		List<ConsumerResponse> dtoList = consumerList.stream().map(ConsumerResponse::new).toList();
+		return ResponseEntity.ok(dtoList);
+	}
+
+	@GetMapping("/all")
 	public ResponseEntity<List<ConsumerResponse>> getAllConsumers() {
 		List<Consumer> consumerList = consumerService.getAllConsumers();
 		List<ConsumerResponse> dtoList = consumerList.stream().map(ConsumerResponse::new).toList();

@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
@@ -43,6 +44,7 @@ public class StorageServiceImpl implements StorageService {
 	}
 
 	@Override
+	@Transactional
 	public Storage createStorage(@Valid StorageRequest request) {
 		Storage storage = request.toEntity();
 		if (securityService.isCurrentUserAdminOrSystem()) {
@@ -59,6 +61,7 @@ public class StorageServiceImpl implements StorageService {
 	}
 
 	@Override
+	@Transactional(readOnly = true)
 	public List<Storage> getAllStorages() {
 		if (securityService.isCurrentUserAdminOrSystem()) {
 			return storageRepository.findAll(PageRequest.of(0, 1000)).getContent();
@@ -68,6 +71,17 @@ public class StorageServiceImpl implements StorageService {
 	}
 
 	@Override
+	@Transactional(readOnly = true)
+	public List<Storage> getAllUnarchivedStorages() {
+		if (securityService.isCurrentUserAdminOrSystem()) {
+			return storageRepository.findAllByArchivedFalse(PageRequest.of(0, 1000)).getContent();
+		}
+		Long userId = securityService.getCurrentUserId();
+		return storageRepository.findAllByUserIdAndArchivedFalse(userId);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
 	public List<Storage> getAllStoragesByOwner(Long ownerId) {
 		if (securityService.isCurrentUserAdminOrSystem()) {
 			return storageRepository.findByUserId(ownerId);
@@ -77,6 +91,7 @@ public class StorageServiceImpl implements StorageService {
 	}
 
 	@Override
+	@Transactional(readOnly = true)
 	public Storage getStorageById(Long storageId) {
 		Storage storage = storageRepository.findById(storageId).orElse(null);
 		if (storage != null) {
@@ -90,6 +105,7 @@ public class StorageServiceImpl implements StorageService {
 	}
 
 	@Override
+	@Transactional
 	public Storage updateStorage(@Valid StorageRequest request) {
 		if (request.getId() == null) {
 			throw new CreateDeviceFailedException("Storage ID must be provided when updating Storage");
@@ -121,6 +137,7 @@ public class StorageServiceImpl implements StorageService {
 	}
 
 	@Override
+	@Transactional
 	public Map<String, String> setActive(Storage storage, boolean active) {
 		if (storage != null) {
 			if (securityService.canAccessDevice(storage)) {
@@ -155,6 +172,7 @@ public class StorageServiceImpl implements StorageService {
 	}
 
 	@Override
+	@Transactional
 	public Map<String, String> archiveStorage(Long storageId) {
 		Storage storage = storageRepository.findById(storageId).orElse(null);
 		if (storage != null) {
@@ -180,6 +198,7 @@ public class StorageServiceImpl implements StorageService {
 	}
 
 	@Override
+	@Transactional
 	public Map<String, String> deleteStorage(Long storageId) {
 		Storage storage = storageRepository.findById(storageId).orElse(null);
 		if (storage != null) {

@@ -41,6 +41,16 @@ public class DeviceServiceImpl implements DeviceService {
 
 	@Override
 	@Transactional(readOnly = true)
+	public List<Device> getAllUnarchivedDevices() {
+		List<Device> deviceList = new ArrayList<>();
+		deviceList.addAll(consumerService.getAllUnarchivedConsumers());
+		deviceList.addAll(producerService.getAllUnarchivedProducers());
+		deviceList.addAll(storageService.getAllUnarchivedStorages());
+		return deviceList;
+	}
+
+	@Override
+	@Transactional(readOnly = true)
 	public Device getDeviceById(Long deviceId) {
 		Consumer consumer = consumerService.getConsumerById(deviceId);
 		if (consumer != null) {

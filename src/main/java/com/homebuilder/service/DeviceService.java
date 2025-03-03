@@ -11,6 +11,7 @@ import java.util.Map;
 public interface DeviceService {
 
 	List<Device> getAllDevices();
+	List<Device> getAllUnarchivedDevices();
 	Device getDeviceById(Long deviceId);
 	Map<String, String> setActive(Long deviceId, boolean active);
 

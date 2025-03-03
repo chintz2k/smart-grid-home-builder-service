@@ -10,6 +10,7 @@ public class DeviceResponse {
 
 	private final Long id;
 	private final String name;
+	private final Long ownerId;
 	private final boolean active;
 	private final boolean archived;
 
@@ -19,6 +20,7 @@ public class DeviceResponse {
 		}
 		this.id = device.getId();
 		this.name = device.getName();
+		this.ownerId = device.getUserId();
 		this.active = device.isActive();
 		this.archived = device.isArchived();
 	}
@@ -29,6 +31,10 @@ public class DeviceResponse {
 
 	public String getName() {
 		return name;
+	}
+
+	public Long getOwnerId() {
+		return ownerId;
 	}
 
 	public boolean isActive() {

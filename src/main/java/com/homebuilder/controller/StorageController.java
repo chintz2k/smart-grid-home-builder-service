@@ -36,6 +36,13 @@ public class StorageController {
 	}
 
 	@GetMapping
+	public ResponseEntity<List<StorageResponse>> getAllUnarchivedStorages() {
+		List<Storage> storageList = storageService.getAllUnarchivedStorages();
+		List<StorageResponse> dtoList = storageList.stream().map(StorageResponse::new).toList();
+		return ResponseEntity.ok(dtoList);
+	}
+
+	@GetMapping("/all")
 	public ResponseEntity<List<StorageResponse>> getAllStorages() {
 		List<Storage> storageList = storageService.getAllStorages();
 		List<StorageResponse> dtoList = storageList.stream().map(StorageResponse::new).toList();

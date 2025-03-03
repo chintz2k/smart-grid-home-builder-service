@@ -13,6 +13,7 @@ public interface StorageService {
 
 	Storage createStorage(StorageRequest request);
 	List<Storage> getAllStorages();
+	List<Storage> getAllUnarchivedStorages();
 	List<Storage> getAllStoragesByOwner(Long ownerId);
 	Storage getStorageById(Long storageId);
 	Storage updateStorage(StorageRequest request);

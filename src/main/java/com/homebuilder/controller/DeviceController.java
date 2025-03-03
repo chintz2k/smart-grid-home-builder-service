@@ -25,6 +25,13 @@ public class DeviceController {
 	}
 
 	@GetMapping
+	public ResponseEntity<List<DeviceResponse>> getAllUnarchivedDevices() {
+		List<Device> deviceList = deviceService.getAllUnarchivedDevices();
+		List<DeviceResponse> dtoList = deviceList.stream().map(DeviceResponse::new).toList();
+		return ResponseEntity.ok(dtoList);
+	}
+
+	@GetMapping("/all")
 	public ResponseEntity<List<DeviceResponse>> getAllDevices() {
 		List<Device> deviceList = deviceService.getAllDevices();
 		List<DeviceResponse> dtoList = deviceList.stream().map(DeviceResponse::new).toList();

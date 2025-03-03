@@ -13,6 +13,7 @@ public interface SmartConsumerProgramService {
 
 	SmartConsumerProgram createSmartConsumerProgram(SmartConsumerProgramRequest request);
 	List<SmartConsumerProgram> getAllSmartConsumerPrograms();
+	List<SmartConsumerProgram> getAllUnarchivedSmartConsumerPrograms();
 	List<SmartConsumerProgram> getAllSmartConsumerProgramsByOwner(Long ownerId);
 	SmartConsumerProgram getSmartConsumerProgramById(Long smartConsumerProgramId);
 	SmartConsumerProgram updateSmartConsumerProgram(SmartConsumerProgramRequest request);

@@ -36,6 +36,13 @@ public class ProducerController {
 	}
 
 	@GetMapping
+	public ResponseEntity<List<ProducerResponse>> getAllUnarchivedProducers() {
+		List<Producer> producerList = producerService.getAllUnarchivedProducers();
+		List<ProducerResponse> dtoList = producerList.stream().map(ProducerResponse::new).toList();
+		return ResponseEntity.ok(dtoList);
+	}
+
+	@GetMapping("/all")
 	public ResponseEntity<List<ProducerResponse>> getAllProducers() {
 		List<Producer> producerList = producerService.getAllProducers();
 		List<ProducerResponse> dtoList = producerList.stream().map(ProducerResponse::new).toList();

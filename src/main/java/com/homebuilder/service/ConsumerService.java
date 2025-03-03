@@ -13,6 +13,7 @@ public interface ConsumerService {
 
 	Consumer createConsumer(ConsumerRequest request);
 	List<Consumer> getAllConsumers();
+	List<Consumer> getAllUnarchivedConsumers();
 	List<Consumer> getAllConsumersByOwner(Long ownerId);
 	Consumer getConsumerById(Long consumerId);
 	Consumer updateConsumer(ConsumerRequest request);

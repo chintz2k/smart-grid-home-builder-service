@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
@@ -43,6 +44,7 @@ public class ProducerServiceImpl implements ProducerService {
 	}
 
 	@Override
+	@Transactional
 	public Producer createProducer(@Valid ProducerRequest request) {
 		Producer producer = request.toEntity();
 		if (securityService.isCurrentUserAdminOrSystem()) {
@@ -59,6 +61,7 @@ public class ProducerServiceImpl implements ProducerService {
 	}
 
 	@Override
+	@Transactional(readOnly = true)
 	public List<Producer> getAllProducers() {
 		if (securityService.isCurrentUserAdminOrSystem()) {
 			return producerRepository.findAll(PageRequest.of(0, 1000)).getContent();
@@ -68,6 +71,17 @@ public class ProducerServiceImpl implements ProducerService {
 	}
 
 	@Override
+	@Transactional(readOnly = true)
+	public List<Producer> getAllUnarchivedProducers() {
+		if (securityService.isCurrentUserAdminOrSystem()) {
+			return producerRepository.findAllByArchivedFalse(PageRequest.of(0, 1000)).getContent();
+		}
+		Long userId = securityService.getCurrentUserId();
+		return producerRepository.findAllByUserIdAndArchivedFalse(userId);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
 	public List<Producer> getAllProducersByOwner(Long ownerId) {
 		if (securityService.isCurrentUserAdminOrSystem()) {
 			return producerRepository.findByUserId(ownerId);
@@ -77,6 +91,7 @@ public class ProducerServiceImpl implements ProducerService {
 	}
 
 	@Override
+	@Transactional(readOnly = true)
 	public Producer getProducerById(Long producerId) {
 		Producer producer = producerRepository.findById(producerId).orElse(null);
 		if (producer != null) {
@@ -90,6 +105,7 @@ public class ProducerServiceImpl implements ProducerService {
 	}
 
 	@Override
+	@Transactional
 	public Producer updateProducer(@Valid ProducerRequest request) {
 		if (request.getId() == null) {
 			throw new CreateDeviceFailedException("Producer ID must be provided when updating Producer");
@@ -121,6 +137,7 @@ public class ProducerServiceImpl implements ProducerService {
 	}
 
 	@Override
+	@Transactional
 	public Map<String, String> setActive(Producer producer, boolean active) {
 		if (producer != null) {
 			if (securityService.canAccessDevice(producer)) {
@@ -155,6 +172,7 @@ public class ProducerServiceImpl implements ProducerService {
 	}
 
 	@Override
+	@Transactional
 	public Map<String, String> archiveProducer(Long producerId) {
 		Producer producer = producerRepository.findById(producerId).orElse(null);
 		if (producer != null) {
@@ -180,6 +198,7 @@ public class ProducerServiceImpl implements ProducerService {
 	}
 
 	@Override
+	@Transactional
 	public Map<String, String> deleteProducer(Long producerId) {
 		Producer producer = producerRepository.findById(producerId).orElse(null);
 		if (producer != null) {

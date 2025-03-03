@@ -13,9 +13,10 @@ import jakarta.validation.constraints.PositiveOrZero;
 public class Storage extends Device {
 
 	@NotNull(message = "Capacity is required")
-	@DecimalMin(value = "1.0", inclusive = true, message = "Capacity must be at least 1")
+	@DecimalMin(value = "1.0", message = "Capacity must be at least 1")
 	private double capacity;
 
+	@Deprecated
 	@NotNull(message = "Current charge is required")
 	@PositiveOrZero(message = "Current charge must be non-negative")
 	private double currentCharge = 0.0;
@@ -40,10 +41,12 @@ public class Storage extends Device {
 		this.capacity = capacity;
 	}
 
+	@Deprecated
 	public double getCurrentCharge() {
 		return currentCharge;
 	}
 
+	@Deprecated
 	public void setCurrentCharge(double currentCharge) {
 		this.currentCharge = currentCharge;
 	}
