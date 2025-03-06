@@ -18,4 +18,5 @@ public interface SmartConsumerRepository extends JpaRepository<SmartConsumer, Lo
 
     List<SmartConsumer> findAllByUserIdAndArchivedFalse(Long userId);
 
+	void deleteAllByUserId(Long userId);
 }

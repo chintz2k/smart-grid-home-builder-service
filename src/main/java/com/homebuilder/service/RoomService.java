@@ -17,8 +17,8 @@ public interface RoomService {
 	Room getRoomById(Long roomId);
 	Room updateRoom(RoomRequest request);
 	Map<String, String> deleteRoom(Long roomId);
+	Map<String, String> deleteAllRoomsByOwnerId(Long ownerId);
 	Map<String, String> assignDeviceToRoom(Long roomId, Long deviceId);
 	Map<String, String> removeDeviceFromRoom(Long roomId, Long deviceId);
-
 
 }

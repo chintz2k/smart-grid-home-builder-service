@@ -20,5 +20,6 @@ public interface SmartConsumerService {
 	Map<String, String> setActive(SmartConsumer smartConsumer, boolean active);
 	Map<String, String> archiveSmartConsumer(Long smartConsumerId);
 	Map<String, String> deleteSmartConsumer(Long smartConsumerId);
+	Map<String, String> deleteAllSmartConsumersByOwnerId(Long ownerId);
 
 }

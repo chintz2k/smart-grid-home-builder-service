@@ -214,4 +214,17 @@ public class StorageServiceImpl implements StorageService {
 		}
 		return null;
 	}
+
+	@Override
+	@Transactional
+	public Map<String, String> deleteAllStoragesByOwnerId(Long ownerId) {
+		if (securityService.isCurrentUserAdminOrSystem()) {
+			storageRepository.deleteAllByUserId(ownerId);
+		} else {
+			throw new UnauthorizedAccessException("Unauthorized access to Storages for Owner with ID " + ownerId);
+		}
+		return Map.of(
+				"message", "Successfully deleted all Storages for Owner with ID " + ownerId
+		);
+	}
 }

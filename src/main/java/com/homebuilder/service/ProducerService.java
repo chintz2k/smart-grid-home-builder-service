@@ -20,5 +20,6 @@ public interface ProducerService {
 	Map<String, String> setActive(Producer producer, boolean active);
 	Map<String, String> archiveProducer(Long producerId);
 	Map<String, String> deleteProducer(Long producerId);
+	Map<String, String> deleteAllProducersByOwnerId(Long ownerId);
 
 }

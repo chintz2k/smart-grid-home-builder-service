@@ -14,5 +14,6 @@ public interface DeviceService {
 	List<Device> getAllUnarchivedDevices();
 	Device getDeviceById(Long deviceId);
 	Map<String, String> setActive(Long deviceId, boolean active);
+	List<Map<String, String>> deleteAllDevicesByOwner(Long ownerId);
 
 }

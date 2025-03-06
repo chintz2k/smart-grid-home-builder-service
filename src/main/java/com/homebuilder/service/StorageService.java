@@ -20,5 +20,6 @@ public interface StorageService {
 	Map<String, String> setActive(Storage storage, boolean active);
 	Map<String, String> archiveStorage(Long storageId);
 	Map<String, String> deleteStorage(Long storageId);
+	Map<String, String> deleteAllStoragesByOwnerId(Long ownerId);
 
 }

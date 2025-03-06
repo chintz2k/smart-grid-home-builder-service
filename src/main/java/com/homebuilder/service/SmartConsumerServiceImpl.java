@@ -214,4 +214,17 @@ public class SmartConsumerServiceImpl implements SmartConsumerService {
         }
         return null;
     }
+
+    @Override
+    @Transactional
+    public Map<String, String> deleteAllSmartConsumersByOwnerId(Long ownerId) {
+        if (securityService.isCurrentUserAdminOrSystem()) {
+            smartConsumerRepository.deleteAllByUserId(ownerId);
+        } else {
+            throw new UnauthorizedAccessException("Unauthorized access to SmartConsumers for Owner with ID " + ownerId);
+        }
+        return Map.of(
+                "message", "Successfully deleted all SmartConsumers for Owner with ID " + ownerId
+        );
+    }
 }

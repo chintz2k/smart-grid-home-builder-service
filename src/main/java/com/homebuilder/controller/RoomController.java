@@ -81,4 +81,11 @@ public class RoomController {
 		List<RoomResponse> dtoList = roomList.stream().map(RoomResponse::new).toList();
 		return ResponseEntity.ok(dtoList);
 	}
+
+	@DeleteMapping("/delete/{ownerId}")
+	@PreAuthorize("hasRole('ADMIN') or hasRole('SYSTEM')")
+	public ResponseEntity<Map<String, String>> deleteAllRoomsByOwner(@PathVariable Long ownerId) {
+		Map<String, String> success = roomService.deleteAllRoomsByOwnerId(ownerId);
+		return ResponseEntity.ok(success);
+	}
 }

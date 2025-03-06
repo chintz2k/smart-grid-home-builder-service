@@ -214,4 +214,17 @@ public class ConsumerServiceImpl implements ConsumerService {
 		}
 		return null;
 	}
+
+	@Override
+	@Transactional
+	public Map<String, String> deleteAllConsumersByOwnerId(Long ownerId) {
+		if (securityService.isCurrentUserAdminOrSystem()) {
+			consumerRepository.deleteAllByUserId(ownerId);
+		} else {
+			throw new UnauthorizedAccessException("Unauthorized access to Consumers for Owner with ID " + ownerId);
+		}
+		return Map.of(
+				"message", "Successfully deleted all Consumers for Owner with ID " + ownerId
+		);
+	}
 }

@@ -214,4 +214,17 @@ public class ProducerServiceImpl implements ProducerService {
 		}
 		return null;
 	}
+
+	@Override
+	@Transactional
+	public Map<String, String> deleteAllProducersByOwnerId(Long ownerId) {
+		if (securityService.isCurrentUserAdminOrSystem()) {
+			producerRepository.deleteAllByUserId(ownerId);
+		} else {
+			throw new UnauthorizedAccessException("Unauthorized access to delete all Producers for Owner with ID " + ownerId);
+		}
+		return Map.of(
+				"message", "Successfully deleted all Producers for Owner with ID " + ownerId
+		);
+	}
 }

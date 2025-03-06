@@ -20,5 +20,6 @@ public interface ConsumerService {
 	Map<String, String> setActive(Consumer consumer, boolean active);
 	Map<String, String> archiveConsumer(Long consumerId);
 	Map<String, String> deleteConsumer(Long consumerId);
+	Map<String, String> deleteAllConsumersByOwnerId(Long ownerId);
 
 }

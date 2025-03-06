@@ -128,6 +128,20 @@ public class RoomServiceImpl implements RoomService {
 
 	@Override
 	@Transactional
+	public Map<String, String> deleteAllRoomsByOwnerId(Long ownerId) {
+		if (securityService.isCurrentUserAdminOrSystem()) {
+			roomRepository.deleteAllByUserId(ownerId);
+		} else {
+			throw new UnauthorizedAccessException("Unauthorized access to delete all Rooms for Owner with ID " + ownerId);
+		}
+		return Map.of(
+				"message", "Successfully deleted all Rooms for Owner with ID " + ownerId,
+				"id", ownerId.toString()
+		);
+	}
+
+	@Override
+	@Transactional
 	public Map<String, String> assignDeviceToRoom(Long roomId, Long deviceId) {
 		Room room = roomRepository.findById(roomId).orElse(null);
 		if (room != null) {

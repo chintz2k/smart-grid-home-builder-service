@@ -74,4 +74,14 @@ public class DeviceServiceImpl implements DeviceService {
 			case null, default -> Map.of("message", "Device with ID " + deviceId + " not found");
 		};
 	}
+
+	@Override
+	@Transactional
+	public List<Map<String, String>> deleteAllDevicesByOwner(Long ownerId) {
+		List<Map<String, String>> list = new ArrayList<>();
+		list.add(consumerService.deleteAllConsumersByOwnerId(ownerId));
+		list.add(producerService.deleteAllProducersByOwnerId(ownerId));
+		list.add(storageService.deleteAllStoragesByOwnerId(ownerId));
+		return list;
+	}
 }

@@ -18,4 +18,5 @@ public interface ProducerRepository extends JpaRepository<Producer, Long> {
 
 	List<Producer> findAllByUserIdAndArchivedFalse(Long userId);
 
+	void deleteAllByUserId(Long userId);
 }
