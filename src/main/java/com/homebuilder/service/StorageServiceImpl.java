@@ -61,6 +61,25 @@ public class StorageServiceImpl implements StorageService {
 	}
 
 	@Override
+	@Transactional
+	public List<Storage> createStorageList(List<@Valid StorageRequest> request) {
+		List<Storage> storageList = request.stream().map(StorageRequest::toEntity).toList();
+		if (securityService.isCurrentUserAdminOrSystem()) {
+			for (StorageRequest storageRequest : request) {
+				if (storageRequest.getOwnerId() == null) {
+					throw new CreateDeviceFailedException("Owner ID must be provided when creating Storages as System User");
+				} else {
+					storageList.forEach(storage -> storage.setUserId(storageRequest.getOwnerId()));
+				}
+			}
+		} else {
+			storageList.forEach(storage -> storage.setUserId(securityService.getCurrentUserId()));
+		}
+		storageRepository.saveAll(storageList);
+		return storageList;
+	}
+
+	@Override
 	@Transactional(readOnly = true)
 	public List<Storage> getAllStorages() {
 		if (securityService.isCurrentUserAdminOrSystem()) {

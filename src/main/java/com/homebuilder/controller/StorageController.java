@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -33,6 +34,15 @@ public class StorageController {
 		Storage storage = storageService.createStorage(request);
 		StorageResponse dto = new StorageResponse(storage);
 		return ResponseEntity.status(HttpStatus.CREATED).body(dto);
+	}
+
+	@PostMapping("/createlist")
+	@PreAuthorize("hasRole('ADMIN') or hasRole('SYSTEM')")
+	public ResponseEntity<List<StorageResponse>> createStorageList(@RequestBody List<@Valid StorageRequest> request) {
+		List<Storage> storageList = storageService.createStorageList(request);
+		List<StorageResponse> dtos = new ArrayList<>();
+		storageList.forEach(storage -> dtos.add(new StorageResponse(storage)));
+		return ResponseEntity.status(HttpStatus.CREATED).body(dtos);
 	}
 
 	@GetMapping

@@ -12,6 +12,7 @@ import java.util.Map;
 public interface ConsumerService {
 
 	Consumer createConsumer(ConsumerRequest request);
+	List<Consumer> createConsumerList(List<ConsumerRequest> request);
 	List<Consumer> getAllConsumers();
 	List<Consumer> getAllUnarchivedConsumers();
 	List<Consumer> getAllConsumersByOwner(Long ownerId);

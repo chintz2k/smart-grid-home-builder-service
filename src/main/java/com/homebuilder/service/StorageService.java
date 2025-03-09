@@ -12,6 +12,7 @@ import java.util.Map;
 public interface StorageService {
 
 	Storage createStorage(StorageRequest request);
+	List<Storage> createStorageList(List<StorageRequest> request);
 	List<Storage> getAllStorages();
 	List<Storage> getAllUnarchivedStorages();
 	List<Storage> getAllStoragesByOwner(Long ownerId);

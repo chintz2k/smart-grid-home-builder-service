@@ -61,6 +61,25 @@ public class ProducerServiceImpl implements ProducerService {
 	}
 
 	@Override
+	@Transactional
+	public List<Producer> createProducerList(List<@Valid ProducerRequest> request) {
+		List<Producer> producerList = request.stream().map(ProducerRequest::toEntity).toList();
+		if (securityService.isCurrentUserAdminOrSystem()) {
+			for (ProducerRequest producerRequest : request) {
+				if (producerRequest.getOwnerId() == null) {
+					throw new CreateDeviceFailedException("Owner ID must be provided when creating Producer as System User");
+				} else {
+					producerList.forEach(producer -> producer.setUserId(producerRequest.getOwnerId()));
+				}
+			}
+		} else {
+			producerList.forEach(producer -> producer.setUserId(securityService.getCurrentUserId()));
+		}
+		producerRepository.saveAll(producerList);
+		return producerList;
+	}
+
+	@Override
 	@Transactional(readOnly = true)
 	public List<Producer> getAllProducers() {
 		if (securityService.isCurrentUserAdminOrSystem()) {

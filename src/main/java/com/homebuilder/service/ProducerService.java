@@ -12,6 +12,7 @@ import java.util.Map;
 public interface ProducerService {
 
 	Producer createProducer(ProducerRequest request);
+	List<Producer> createProducerList(List<ProducerRequest> request);
 	List<Producer> getAllProducers();
 	List<Producer> getAllUnarchivedProducers();
 	List<Producer> getAllProducersByOwner(Long ownerId);

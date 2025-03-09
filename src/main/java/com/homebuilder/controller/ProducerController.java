@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -33,6 +34,15 @@ public class ProducerController {
 		Producer producer = producerService.createProducer(request);
 		ProducerResponse dto = new ProducerResponse(producer);
 		return ResponseEntity.status(HttpStatus.CREATED).body(dto);
+	}
+
+	@PostMapping("/createlist")
+	@PreAuthorize("hasRole('ADMIN') or hasRole('SYSTEM')")
+	public ResponseEntity<List<ProducerResponse>> createProducerList(@RequestBody List<@Valid ProducerRequest> request) {
+		List<Producer> producerList = producerService.createProducerList(request);
+		List<ProducerResponse> dtos = new ArrayList<>();
+		producerList.forEach(producer -> dtos.add(new ProducerResponse(producer)));
+		return ResponseEntity.status(HttpStatus.CREATED).body(dtos);
 	}
 
 	@GetMapping

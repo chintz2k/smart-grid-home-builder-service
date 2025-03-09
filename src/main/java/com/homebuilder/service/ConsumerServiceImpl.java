@@ -61,6 +61,25 @@ public class ConsumerServiceImpl implements ConsumerService {
 	}
 
 	@Override
+	@Transactional
+	public List<Consumer> createConsumerList(List<@Valid ConsumerRequest> request) {
+		List<Consumer> consumerList = request.stream().map(ConsumerRequest::toEntity).toList();
+		if (securityService.isCurrentUserAdminOrSystem()) {
+			for (ConsumerRequest consumerRequest : request) {
+				if (consumerRequest.getOwnerId() == null) {
+					throw new CreateDeviceFailedException("Owner ID must be provided when creating Consumer as System User");
+				} else {
+					consumerList.forEach(consumer -> consumer.setUserId(consumerRequest.getOwnerId()));
+				}
+			}
+		} else {
+			consumerList.forEach(consumer -> consumer.setUserId(securityService.getCurrentUserId()));
+		}
+		consumerRepository.saveAll(consumerList);
+		return consumerList;
+	}
+
+	@Override
 	@Transactional(readOnly = true)
 	public List<Consumer> getAllConsumers() {
 		if (securityService.isCurrentUserAdminOrSystem()) {

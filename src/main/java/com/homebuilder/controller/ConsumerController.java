@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -33,6 +34,15 @@ public class ConsumerController {
 		Consumer consumer = consumerService.createConsumer(request);
 		ConsumerResponse dto = new ConsumerResponse(consumer);
 		return ResponseEntity.status(HttpStatus.CREATED).body(dto);
+	}
+
+	@PostMapping("/createlist")
+	@PreAuthorize("hasRole('ADMIN') or hasRole('SYSTEM')")
+	public ResponseEntity<List<ConsumerResponse>> createConsumerList(@RequestBody List<@Valid ConsumerRequest> request) {
+		List<Consumer> consumerList = consumerService.createConsumerList(request);
+		List<ConsumerResponse> dtos = new ArrayList<>();
+		consumerList.forEach(consumer -> dtos.add(new ConsumerResponse(consumer)));
+		return ResponseEntity.status(HttpStatus.CREATED).body(dtos);
 	}
 
 	@GetMapping

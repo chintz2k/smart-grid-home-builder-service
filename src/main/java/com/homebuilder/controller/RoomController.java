@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -33,6 +34,15 @@ public class RoomController {
 		Room room = roomService.createRoom(request);
 		RoomResponse dto = new RoomResponse(room);
 		return ResponseEntity.status(HttpStatus.CREATED).body(dto);
+	}
+
+	@PostMapping("/createlist")
+	@PreAuthorize("hasRole('ADMIN') or hasRole('SYSTEM')")
+	public ResponseEntity<List<RoomResponse>> createRoomList(@RequestBody List<@Valid RoomRequest> request) {
+		List<Room> roomList = roomService.createRoomList(request);
+		List<RoomResponse> dtos = new ArrayList<>();
+		roomList.forEach(room -> dtos.add(new RoomResponse(room)));
+		return ResponseEntity.status(HttpStatus.CREATED).body(dtos);
 	}
 
 	@GetMapping

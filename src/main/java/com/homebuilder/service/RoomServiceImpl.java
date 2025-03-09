@@ -54,6 +54,25 @@ public class RoomServiceImpl implements RoomService {
 	}
 
 	@Override
+	@Transactional
+	public List<Room> createRoomList(List<@Valid RoomRequest> request) {
+		List<Room> roomList = request.stream().map(RoomRequest::toEntity).toList();
+		if (securityService.isCurrentUserAdminOrSystem()) {
+			for (RoomRequest roomRequest : request) {
+				if (roomRequest.getOwnerId() == null) {
+					throw new CreateDeviceFailedException("Owner ID must be provided when creating Rooms as System User");
+				} else {
+					roomList.forEach(room -> room.setUserId(roomRequest.getOwnerId()));
+				}
+			}
+		} else {
+			roomList.forEach(room -> room.setUserId(securityService.getCurrentUserId()));
+		}
+		roomRepository.saveAll(roomList);
+		return roomList;
+	}
+
+	@Override
 	@Transactional(readOnly = true)
 	public List<Room> getAllRooms() {
 		if (securityService.isCurrentUserAdminOrSystem()) {

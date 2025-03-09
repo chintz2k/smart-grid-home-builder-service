@@ -12,6 +12,7 @@ import java.util.Map;
 public interface RoomService {
 
 	Room createRoom(RoomRequest request);
+	List<Room> createRoomList(List<RoomRequest> request);
 	List<Room> getAllRooms();
 	List<Room> getAllRoomsByOwner(Long ownerId);
 	Room getRoomById(Long roomId);
