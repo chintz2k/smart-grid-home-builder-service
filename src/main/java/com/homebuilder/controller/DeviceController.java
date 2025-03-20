@@ -1,6 +1,7 @@
 package com.homebuilder.controller;
 
 import com.homebuilder.dto.DeviceResponse;
+import com.homebuilder.dto.GeneralDeviceDataDTO;
 import com.homebuilder.entity.Device;
 import com.homebuilder.service.DeviceService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +44,12 @@ public class DeviceController {
 	public ResponseEntity<DeviceResponse> getDeviceById(@PathVariable Long deviceId) {
 		Device device = deviceService.getDeviceById(deviceId);
 		DeviceResponse dto = new DeviceResponse(device);
+		return ResponseEntity.ok(dto);
+	}
+
+	@GetMapping("/{deviceId}/data")
+	public ResponseEntity<GeneralDeviceDataDTO> getDeviceDataById(@PathVariable Long deviceId) {
+		GeneralDeviceDataDTO dto = deviceService.getDeviceDataById(deviceId);
 		return ResponseEntity.ok(dto);
 	}
 

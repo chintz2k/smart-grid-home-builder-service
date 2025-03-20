@@ -83,6 +83,14 @@ public class SecurityService {
 		return getCurrentUserRole().equals("ROLE_ADMIN") || getCurrentUserRole().equals("ROLE_SYSTEM");
 	}
 
+	/**
+	 * Determines whether the current user can access the specified device.
+	 *
+	 * @param device the device to check access for; the device must have a user ID associated with it
+	 * @param <T> the type of the device, which must extend the Device class
+	 * @return true if the current user's ID matches the device's user ID or if the current user has an admin or system role;
+	 *         false otherwise
+	 */
 	public <T extends Device> boolean canAccessDevice(T device) {
 		Long userId = getCurrentUserId();
 		if (!device.getUserId().equals(userId)) {
