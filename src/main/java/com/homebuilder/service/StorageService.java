@@ -1,7 +1,10 @@
 package com.homebuilder.service;
 
 import com.homebuilder.dto.StorageRequest;
+import com.homebuilder.dto.StorageResponse;
 import com.homebuilder.entity.Storage;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Map;
@@ -22,5 +25,7 @@ public interface StorageService {
 	Map<String, String> archiveStorage(Long storageId);
 	Map<String, String> deleteStorage(Long storageId);
 	Map<String, String> deleteAllStoragesByOwnerId(Long ownerId);
+
+	Page<StorageResponse> getAllUnarchivedByUser(Pageable pageable);
 
 }

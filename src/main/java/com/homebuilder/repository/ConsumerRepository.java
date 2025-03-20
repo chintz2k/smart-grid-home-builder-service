@@ -19,4 +19,7 @@ public interface ConsumerRepository extends JpaRepository<Consumer, Long> {
 	List<Consumer> findAllByUserIdAndArchivedFalse(Long userId);
 
 	void deleteAllByUserId(Long userId);
+
+	Page<Consumer> findByUserIdAndArchivedFalse(Long userId, Pageable pageable);
+
 }

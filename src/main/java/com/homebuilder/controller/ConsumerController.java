@@ -6,6 +6,8 @@ import com.homebuilder.entity.Consumer;
 import com.homebuilder.service.ConsumerService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -50,6 +52,15 @@ public class ConsumerController {
 		List<Consumer> consumerList = consumerService.getAllUnarchivedConsumers();
 		List<ConsumerResponse> dtoList = consumerList.stream().map(ConsumerResponse::new).toList();
 		return ResponseEntity.ok(dtoList);
+	}
+
+	@GetMapping("/list/self")
+	public ResponseEntity<Page<ConsumerResponse>> getAllConsumersBySelf(
+			@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "20") int size
+	) {
+		Page<ConsumerResponse> pages = consumerService.getAllUnarchivedByUser(PageRequest.of(page, size));
+		return ResponseEntity.ok(pages);
 	}
 
 	@GetMapping("/all")

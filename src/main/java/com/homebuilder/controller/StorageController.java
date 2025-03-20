@@ -6,6 +6,8 @@ import com.homebuilder.entity.Storage;
 import com.homebuilder.service.StorageService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -50,6 +52,15 @@ public class StorageController {
 		List<Storage> storageList = storageService.getAllUnarchivedStorages();
 		List<StorageResponse> dtoList = storageList.stream().map(StorageResponse::new).toList();
 		return ResponseEntity.ok(dtoList);
+	}
+
+	@GetMapping("/list/self")
+	public ResponseEntity<Page<StorageResponse>> getAllStoragesBySelf(
+			@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "20") int size
+	) {
+		Page<StorageResponse> pages = storageService.getAllUnarchivedByUser(PageRequest.of(page, size));
+		return ResponseEntity.ok(pages);
 	}
 
 	@GetMapping("/all")

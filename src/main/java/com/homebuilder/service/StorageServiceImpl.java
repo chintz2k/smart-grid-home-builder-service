@@ -1,6 +1,7 @@
 package com.homebuilder.service;
 
 import com.homebuilder.dto.StorageRequest;
+import com.homebuilder.dto.StorageResponse;
 import com.homebuilder.entity.Storage;
 import com.homebuilder.exception.CreateDeviceFailedException;
 import com.homebuilder.exception.DeviceNotFoundException;
@@ -11,7 +12,9 @@ import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -245,5 +248,12 @@ public class StorageServiceImpl implements StorageService {
 		return Map.of(
 				"message", "Successfully deleted all Storages for Owner with ID " + ownerId
 		);
+	}
+
+	@Override
+	public Page<StorageResponse> getAllUnarchivedByUser(Pageable pageable) {
+		Long userId = securityService.getCurrentUserId();
+		Page<Storage> storagePage = storageRepository.findByUserIdAndArchivedFalse(userId, pageable);
+		return storagePage.map(StorageResponse::new);
 	}
 }

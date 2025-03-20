@@ -19,4 +19,7 @@ public interface StorageRepository extends JpaRepository<Storage, Long> {
 	List<Storage> findAllByUserIdAndArchivedFalse(Long userId);
 
 	void deleteAllByUserId(Long userId);
+
+	Page<Storage> findByUserIdAndArchivedFalse(Long userId, Pageable pageable);
+
 }

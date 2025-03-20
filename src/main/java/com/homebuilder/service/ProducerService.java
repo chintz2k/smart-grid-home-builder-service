@@ -1,7 +1,10 @@
 package com.homebuilder.service;
 
 import com.homebuilder.dto.ProducerRequest;
+import com.homebuilder.dto.ProducerResponse;
 import com.homebuilder.entity.Producer;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Map;
@@ -22,5 +25,7 @@ public interface ProducerService {
 	Map<String, String> archiveProducer(Long producerId);
 	Map<String, String> deleteProducer(Long producerId);
 	Map<String, String> deleteAllProducersByOwnerId(Long ownerId);
+
+	Page<ProducerResponse> getAllUnarchivedByUser(Pageable pageable);
 
 }
