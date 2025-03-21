@@ -16,6 +16,8 @@ public class RoomResponse {
 	private final String name;
 	private final Long ownerId;
 
+	private final int deviceCount;
+
 	private final List<Long> deviceIds = new ArrayList<>();
 
 	public RoomResponse(Room room) {
@@ -25,6 +27,7 @@ public class RoomResponse {
 		this.id = room.getId();
 		this.name = room.getName();
 		this.ownerId = room.getUserId();
+		this.deviceCount = room.getDevices().size();
 		for (Device device : room.getDevices()) {
 			this.deviceIds.add(device.getId());
 		}
@@ -40,6 +43,10 @@ public class RoomResponse {
 
 	public Long getOwnerId() {
 		return ownerId;
+	}
+
+	public int getDeviceCount() {
+		return deviceCount;
 	}
 
 	public List<Long> getDeviceIds() {
