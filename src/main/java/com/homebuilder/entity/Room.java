@@ -19,8 +19,7 @@ public class Room {
 
 	private Long userId;
 
-	@OneToMany(fetch = FetchType.EAGER)
-	@JoinColumn(name = "room_id", nullable = true)
+	@OneToMany(mappedBy = "room", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	private List<Device> devices = new ArrayList<>();
 
 	public Room() {
@@ -61,9 +60,11 @@ public class Room {
 
 	public void addDevice(Device device) {
 		devices.add(device);
+		device.setRoom(this);
 	}
 
 	public void removeDevice(Device device) {
 		devices.remove(device);
+		device.setRoom(null);
 	}
 }

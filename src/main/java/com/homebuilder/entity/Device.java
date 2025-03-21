@@ -23,6 +23,10 @@ public abstract class Device {
 
 	private boolean archived = false;
 
+	@ManyToOne
+	@JoinColumn(name = "room_id", nullable = true)
+	private Room room;
+
 	public Device() {
 
 	}
@@ -66,4 +70,13 @@ public abstract class Device {
 	public void setArchived(boolean archived) {
 		this.archived = archived;
 	}
+
+	public Room getRoom() {
+		return room;
+	}
+
+	public void setRoom(Room room) {
+		this.room = room;
+	}
+
 }
