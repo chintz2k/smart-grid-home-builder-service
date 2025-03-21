@@ -19,7 +19,7 @@ public class Room {
 
 	private Long userId;
 
-	@OneToMany
+	@OneToMany(fetch = FetchType.EAGER)
 	@JoinColumn(name = "room_id", nullable = true)
 	private List<Device> devices = new ArrayList<>();
 
