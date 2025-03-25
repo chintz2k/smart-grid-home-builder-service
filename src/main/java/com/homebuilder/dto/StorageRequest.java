@@ -36,6 +36,8 @@ public class StorageRequest {
 	@Max(value = 10, message = "Consuming priority must be between 0 and 10")
 	private int consumingPriority = 0;
 
+	private Long roomId = null;
+
 	public StorageRequest() {
 
 	}
@@ -110,6 +112,14 @@ public class StorageRequest {
 
 	public void setConsumingPriority(int consumingPriority) {
 		this.consumingPriority = consumingPriority;
+	}
+
+	public Long getRoomId() {
+		return roomId;
+	}
+
+	public void setRoomId(Long roomId) {
+		this.roomId = roomId;
 	}
 
 	/**

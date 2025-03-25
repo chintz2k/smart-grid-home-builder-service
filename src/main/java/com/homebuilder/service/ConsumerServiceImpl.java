@@ -3,10 +3,12 @@ package com.homebuilder.service;
 import com.homebuilder.dto.ConsumerRequest;
 import com.homebuilder.dto.ConsumerResponse;
 import com.homebuilder.entity.Consumer;
+import com.homebuilder.entity.Room;
 import com.homebuilder.exception.CreateDeviceFailedException;
 import com.homebuilder.exception.DeviceNotFoundException;
 import com.homebuilder.exception.UnauthorizedAccessException;
 import com.homebuilder.repository.ConsumerRepository;
+import com.homebuilder.repository.RoomRepository;
 import com.homebuilder.security.SecurityService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -38,12 +40,14 @@ public class ConsumerServiceImpl implements ConsumerService {
 	private final SecurityService securityService;
 
 	private final KafkaTemplate<String, String> kafkaTemplate;
+	private final RoomRepository roomRepository;
 
 	@Autowired
-	public ConsumerServiceImpl(ConsumerRepository consumerRepository, SecurityService securityService, KafkaTemplate<String, String> kafkaTemplate) {
+	public ConsumerServiceImpl(ConsumerRepository consumerRepository, SecurityService securityService, KafkaTemplate<String, String> kafkaTemplate, RoomRepository roomRepository) {
 		this.consumerRepository = consumerRepository;
 		this.securityService = securityService;
 		this.kafkaTemplate = kafkaTemplate;
+		this.roomRepository = roomRepository;
 	}
 
 	@Override
@@ -60,6 +64,19 @@ public class ConsumerServiceImpl implements ConsumerService {
 			consumer.setUserId(securityService.getCurrentUserId());
 		}
 		consumerRepository.save(consumer);
+		Long roomId = request.getRoomId();
+		if (roomId != null) {
+			Room room = roomRepository.findById(roomId).orElse(null);
+			if (room != null) {
+				if (securityService.getCurrentUserId().equals(room.getUserId())) {
+					room.addDevice(consumer);
+					consumer.setRoom(room);
+					roomRepository.save(room);
+				} else {
+					throw new UnauthorizedAccessException("Unauthorized access to Room with ID " + roomId);
+				}
+			}
+		}
 		return consumer;
 	}
 
@@ -110,6 +127,14 @@ public class ConsumerServiceImpl implements ConsumerService {
 		} else {
 			throw new UnauthorizedAccessException("Unauthorized access to Consumers for Owner with ID " + ownerId);
 		}
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public Page<ConsumerResponse> getAllConsumersByOwnerAndRoomIsNull(Pageable pageable) {
+		Long ownerId = securityService.getCurrentUserId();
+		Page<Consumer> list = consumerRepository.findByUserIdAndRoomIsNull(ownerId, pageable);
+		return list.map(ConsumerResponse::new);
 	}
 
 	@Override

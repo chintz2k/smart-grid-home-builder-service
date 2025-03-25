@@ -27,6 +27,8 @@ public class ProducerRequest {
 	@DecimalMin(value = "0.001", inclusive = true, message = "Maximum output production must be at least 0.001")
 	private double powerProduction;
 
+	private Long roomId = null;
+
 	private boolean renewable;
 
 	// Erneuerbare
@@ -186,6 +188,14 @@ public class ProducerRequest {
 	public void setNuclearPower(boolean nuclearPower) {
 		this.nuclearPower = nuclearPower;
 		updateRenewableStatus();
+	}
+
+	public Long getRoomId() {
+		return roomId;
+	}
+
+	public void setRoomId(Long roomId) {
+		this.roomId = roomId;
 	}
 
 	/**

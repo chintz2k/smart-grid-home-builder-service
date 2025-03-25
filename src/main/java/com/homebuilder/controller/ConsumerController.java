@@ -54,6 +54,15 @@ public class ConsumerController {
 		return ResponseEntity.ok(dtoList);
 	}
 
+	@GetMapping("/list/self/noroom")
+	public ResponseEntity<Page<ConsumerResponse>> getAllConsumersBySelfAndNoRoom(
+			@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "20") int size
+	) {
+		Page<ConsumerResponse> pages = consumerService.getAllConsumersByOwnerAndRoomIsNull(PageRequest.of(page, size));
+		return ResponseEntity.ok(pages);
+	}
+
 	@GetMapping("/list/self")
 	public ResponseEntity<Page<ConsumerResponse>> getAllConsumersBySelf(
 			@RequestParam(defaultValue = "0") int page,

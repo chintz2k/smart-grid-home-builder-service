@@ -22,4 +22,6 @@ public interface StorageRepository extends JpaRepository<Storage, Long> {
 
 	Page<Storage> findByUserIdAndArchivedFalse(Long userId, Pageable pageable);
 
+	Page<Storage> findByUserIdAndRoomIsNull(Long userId, Pageable pageable);
+
 }

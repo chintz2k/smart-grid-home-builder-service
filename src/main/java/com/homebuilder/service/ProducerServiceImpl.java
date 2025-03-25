@@ -3,10 +3,12 @@ package com.homebuilder.service;
 import com.homebuilder.dto.ProducerRequest;
 import com.homebuilder.dto.ProducerResponse;
 import com.homebuilder.entity.Producer;
+import com.homebuilder.entity.Room;
 import com.homebuilder.exception.CreateDeviceFailedException;
 import com.homebuilder.exception.DeviceNotFoundException;
 import com.homebuilder.exception.UnauthorizedAccessException;
 import com.homebuilder.repository.ProducerRepository;
+import com.homebuilder.repository.RoomRepository;
 import com.homebuilder.security.SecurityService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -38,12 +40,14 @@ public class ProducerServiceImpl implements ProducerService {
 	private final SecurityService securityService;
 
 	private final KafkaTemplate<String, String> kafkaTemplate;
+	private final RoomRepository roomRepository;
 
 	@Autowired
-	public ProducerServiceImpl(ProducerRepository producerRepository, SecurityService securityService, KafkaTemplate<String, String> kafkaTemplate) {
+	public ProducerServiceImpl(ProducerRepository producerRepository, SecurityService securityService, KafkaTemplate<String, String> kafkaTemplate, RoomRepository roomRepository) {
 		this.producerRepository = producerRepository;
 		this.securityService = securityService;
 		this.kafkaTemplate = kafkaTemplate;
+		this.roomRepository = roomRepository;
 	}
 
 	@Override
@@ -60,6 +64,19 @@ public class ProducerServiceImpl implements ProducerService {
 			producer.setUserId(securityService.getCurrentUserId());
 		}
 		producerRepository.save(producer);
+		Long roomId = request.getRoomId();
+		if (roomId != null) {
+			Room room = roomRepository.findById(roomId).orElse(null);
+			if (room != null) {
+				if (securityService.getCurrentUserId().equals(room.getUserId())) {
+					room.addDevice(producer);
+					producer.setRoom(room);
+					roomRepository.save(room);
+				} else {
+					throw new UnauthorizedAccessException("Unauthorized access to Room with ID " + roomId);
+				}
+			}
+		}
 		return producer;
 	}
 
@@ -110,6 +127,14 @@ public class ProducerServiceImpl implements ProducerService {
 		} else {
 			throw new UnauthorizedAccessException("Unauthorized access to Producers for Owner with ID " + ownerId);
 		}
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public Page<ProducerResponse> getAllProducersByOwnerAndRoomIsNull(Pageable pageable) {
+		Long userId = securityService.getCurrentUserId();
+		Page<Producer> producerPage = producerRepository.findByUserIdAndRoomIsNull(userId, pageable);
+		return producerPage.map(ProducerResponse::new);
 	}
 
 	@Override

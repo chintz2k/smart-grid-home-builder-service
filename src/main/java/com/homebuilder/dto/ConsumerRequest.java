@@ -25,6 +25,8 @@ public class ConsumerRequest {
 	@DecimalMin(value = "0.001", message = "Power consumption must be at least 0.001")
 	private double powerConsumption;
 
+	private Long roomId = null;
+
 	public ConsumerRequest() {
 
 	}
@@ -75,6 +77,14 @@ public class ConsumerRequest {
 
 	public void setPowerConsumption(double powerConsumption) {
 		this.powerConsumption = powerConsumption;
+	}
+
+	public Long getRoomId() {
+		return roomId;
+	}
+
+	public void setRoomId(Long roomId) {
+		this.roomId = roomId;
 	}
 
 	/**

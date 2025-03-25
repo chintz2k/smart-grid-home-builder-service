@@ -11,6 +11,7 @@ import java.util.Map;
  */
 public interface RoomService {
 
+	void saveRoom(Room room);
 	Room createRoom(RoomRequest request);
 	List<Room> createRoomList(List<RoomRequest> request);
 	List<Room> getAllRooms();

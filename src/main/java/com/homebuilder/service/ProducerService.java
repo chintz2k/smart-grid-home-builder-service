@@ -19,6 +19,7 @@ public interface ProducerService {
 	List<Producer> getAllProducers();
 	List<Producer> getAllUnarchivedProducers();
 	List<Producer> getAllProducersByOwner(Long ownerId);
+	Page<ProducerResponse> getAllProducersByOwnerAndRoomIsNull(Pageable pageable);
 	Producer getProducerById(Long producerId);
 	Producer updateProducer(ProducerRequest request);
 	Map<String, String> setActive(Producer producer, boolean active);

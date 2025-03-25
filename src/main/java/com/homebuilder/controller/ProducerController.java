@@ -54,6 +54,15 @@ public class ProducerController {
 		return ResponseEntity.ok(dtoList);
 	}
 
+	@GetMapping("/list/self/noroom")
+	public ResponseEntity<Page<ProducerResponse>> getAllProducersBySelfAndNoRoom(
+			@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "20") int size
+	) {
+		Page<ProducerResponse> pages = producerService.getAllProducersByOwnerAndRoomIsNull(PageRequest.of(page, size));
+		return ResponseEntity.ok(pages);
+	}
+
 	@GetMapping("/list/self")
 	public ResponseEntity<Page<ProducerResponse>> getAllProducersBySelf(
 			@RequestParam(defaultValue = "0") int page,

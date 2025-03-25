@@ -54,6 +54,15 @@ public class StorageController {
 		return ResponseEntity.ok(dtoList);
 	}
 
+	@GetMapping("/list/self/noroom")
+	public ResponseEntity<Page<StorageResponse>> getAllStoragesBySelfAndNoRoom(
+			@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "20") int size
+	) {
+		Page<StorageResponse> pages = storageService.getAllStoragesByOwnerAndRoomIsNull(PageRequest.of(page, size));
+		return ResponseEntity.ok(pages);
+	}
+
 	@GetMapping("/list/self")
 	public ResponseEntity<Page<StorageResponse>> getAllStoragesBySelf(
 			@RequestParam(defaultValue = "0") int page,

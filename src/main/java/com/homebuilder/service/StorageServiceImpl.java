@@ -2,10 +2,12 @@ package com.homebuilder.service;
 
 import com.homebuilder.dto.StorageRequest;
 import com.homebuilder.dto.StorageResponse;
+import com.homebuilder.entity.Room;
 import com.homebuilder.entity.Storage;
 import com.homebuilder.exception.CreateDeviceFailedException;
 import com.homebuilder.exception.DeviceNotFoundException;
 import com.homebuilder.exception.UnauthorizedAccessException;
+import com.homebuilder.repository.RoomRepository;
 import com.homebuilder.repository.StorageRepository;
 import com.homebuilder.security.SecurityService;
 import jakarta.validation.Valid;
@@ -38,18 +40,21 @@ public class StorageServiceImpl implements StorageService {
 	private final SecurityService securityService;
 
 	private final KafkaTemplate<String, String> kafkaTemplate;
+	private final RoomRepository roomRepository;
 
 	@Autowired
-	public StorageServiceImpl(StorageRepository storageRepository, SecurityService securityService, KafkaTemplate<String, String> kafkaTemplate) {
+	public StorageServiceImpl(StorageRepository storageRepository, SecurityService securityService, KafkaTemplate<String, String> kafkaTemplate, RoomRepository roomRepository) {
 		this.storageRepository = storageRepository;
 		this.securityService = securityService;
 		this.kafkaTemplate = kafkaTemplate;
+		this.roomRepository = roomRepository;
 	}
 
 	@Override
 	@Transactional
 	public Storage createStorage(@Valid StorageRequest request) {
 		Storage storage = request.toEntity();
+		Long roomId = request.getRoomId();
 		if (securityService.isCurrentUserAdminOrSystem()) {
 			if (request.getOwnerId() == null) {
 				throw new CreateDeviceFailedException("Owner ID must be provided when creating Storage as System User");
@@ -60,6 +65,18 @@ public class StorageServiceImpl implements StorageService {
 			storage.setUserId(securityService.getCurrentUserId());
 		}
 		storageRepository.save(storage);
+		if (roomId != null) {
+			Room room = roomRepository.findById(roomId).orElse(null);
+			if (room != null) {
+				if (securityService.getCurrentUserId().equals(room.getUserId())) {
+					room.addDevice(storage);
+					storage.setRoom(room);
+					roomRepository.save(room);
+				} else {
+					throw new UnauthorizedAccessException("Unauthorized access to Room with ID " + roomId);
+				}
+			}
+		}
 		return storage;
 	}
 
@@ -110,6 +127,14 @@ public class StorageServiceImpl implements StorageService {
 		} else {
 			throw new UnauthorizedAccessException("Unauthorized access to Storages for Owner with ID " + ownerId);
 		}
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public Page<StorageResponse> getAllStoragesByOwnerAndRoomIsNull(Pageable pageable) {
+		Long userId = securityService.getCurrentUserId();
+		Page<Storage> storagePage = storageRepository.findByUserIdAndRoomIsNull(userId, pageable);
+		return storagePage.map(StorageResponse::new);
 	}
 
 	@Override

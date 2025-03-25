@@ -22,4 +22,6 @@ public interface ConsumerRepository extends JpaRepository<Consumer, Long> {
 
 	Page<Consumer> findByUserIdAndArchivedFalse(Long userId, Pageable pageable);
 
+	Page<Consumer> findByUserIdAndRoomIsNull(Long userId, Pageable pageable);
+
 }

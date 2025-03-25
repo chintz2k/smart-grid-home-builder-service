@@ -25,6 +25,12 @@ public class SmartConsumerRequest {
 
 	private boolean archived = false;
 
+	private Long roomId = null;
+
+	private String smartConsumerProgramName = null;
+	private int smartConsumerProgramDurationInSeconds;
+	private double smartConsumerProgramPowerConsumption;
+
 	public SmartConsumerRequest() {
 
 	}
@@ -75,6 +81,38 @@ public class SmartConsumerRequest {
 
 	public void setArchived(boolean archived) {
 		this.archived = archived;
+	}
+
+	public Long getRoomId() {
+		return roomId;
+	}
+
+	public void setRoomId(Long roomId) {
+		this.roomId = roomId;
+	}
+
+	public String getSmartConsumerProgramName() {
+		return smartConsumerProgramName;
+	}
+
+	public void setSmartConsumerProgramName(String smartConsumerProgramName) {
+		this.smartConsumerProgramName = smartConsumerProgramName;
+	}
+
+	public int getSmartConsumerProgramDurationInSeconds() {
+		return smartConsumerProgramDurationInSeconds;
+	}
+
+	public void setSmartConsumerProgramDurationInSeconds(int smartConsumerProgramDurationInSeconds) {
+		this.smartConsumerProgramDurationInSeconds = smartConsumerProgramDurationInSeconds;
+	}
+
+	public double getSmartConsumerProgramPowerConsumption() {
+		return smartConsumerProgramPowerConsumption;
+	}
+
+	public void setSmartConsumerProgramPowerConsumption(double smartConsumerProgramPowerConsumption) {
+		this.smartConsumerProgramPowerConsumption = smartConsumerProgramPowerConsumption;
 	}
 
 	/**

@@ -38,6 +38,12 @@ public class RoomServiceImpl implements RoomService {
 
 	@Override
 	@Transactional
+	public void saveRoom(Room room) {
+		roomRepository.save(room);
+	}
+
+	@Override
+	@Transactional
 	public Room createRoom(@Valid RoomRequest request) {
 		Room room = request.toEntity();
 		if (securityService.isCurrentUserAdminOrSystem()) {
