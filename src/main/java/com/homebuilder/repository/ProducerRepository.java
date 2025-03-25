@@ -24,4 +24,6 @@ public interface ProducerRepository extends JpaRepository<Producer, Long> {
 
 	Page<Producer> findByUserIdAndRoomIsNull(Long userId, Pageable pageable);
 
+	Page<Producer> findByRoomId(Long roomId, Pageable pageable);
+
 }

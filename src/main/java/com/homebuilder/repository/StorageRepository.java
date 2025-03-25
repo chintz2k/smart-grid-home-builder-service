@@ -24,4 +24,6 @@ public interface StorageRepository extends JpaRepository<Storage, Long> {
 
 	Page<Storage> findByUserIdAndRoomIsNull(Long userId, Pageable pageable);
 
+	Page<Storage> findByRoomId(Long roomId, Pageable pageable);
+
 }

@@ -20,6 +20,7 @@ public interface ConsumerService {
 	List<Consumer> getAllUnarchivedConsumers();
 	List<Consumer> getAllConsumersByOwner(Long ownerId);
 	Page<ConsumerResponse> getAllConsumersByOwnerAndRoomIsNull(Pageable pageable);
+	Page<ConsumerResponse> getAllConsumersByOwnerAndRoomId(Long roomId, Pageable pageable);
 	Consumer getConsumerById(Long consumerId);
 	Consumer updateConsumer(ConsumerRequest request);
 	Map<String, String> setActive(Consumer consumer, boolean active);

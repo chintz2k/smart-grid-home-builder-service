@@ -63,6 +63,16 @@ public class StorageController {
 		return ResponseEntity.ok(pages);
 	}
 
+	@GetMapping("/list/self/room/{roomId}")
+	public ResponseEntity<Page<StorageResponse>> getAllStoragesBySelfAndRoom(
+			@PathVariable Long roomId,
+			@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "20") int size
+	) {
+		Page<StorageResponse> pages = storageService.getAllStoragesByOwnerAndRoomId(roomId, PageRequest.of(page, size));
+		return ResponseEntity.ok(pages);
+	}
+
 	@GetMapping("/list/self")
 	public ResponseEntity<Page<StorageResponse>> getAllStoragesBySelf(
 			@RequestParam(defaultValue = "0") int page,

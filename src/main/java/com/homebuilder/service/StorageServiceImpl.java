@@ -139,6 +139,17 @@ public class StorageServiceImpl implements StorageService {
 
 	@Override
 	@Transactional(readOnly = true)
+	public Page<StorageResponse> getAllStoragesByOwnerAndRoomId(Long roomId, Pageable pageable) {
+		Long userId = securityService.getCurrentUserId();
+		Page<Storage> list = storageRepository.findByRoomId(roomId, pageable);
+		if (!Objects.equals(list.getContent().getFirst().getUserId(), userId)) {
+			throw new UnauthorizedAccessException("Unauthorized access to Storages for Owner with ID " + userId);
+		}
+		return list.map(StorageResponse::new);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
 	public Storage getStorageById(Long storageId) {
 		Storage storage = storageRepository.findById(storageId).orElse(null);
 		if (storage != null) {

@@ -63,6 +63,16 @@ public class ProducerController {
 		return ResponseEntity.ok(pages);
 	}
 
+	@GetMapping("/list/self/room/{roomId}")
+	public ResponseEntity<Page<ProducerResponse>> getAllProducersBySelfAndRoom(
+			@PathVariable Long roomId,
+			@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "20") int size
+	) {
+		Page<ProducerResponse> pages = producerService.getAllProducersByOwnerAndRoomId(roomId, PageRequest.of(page, size));
+		return ResponseEntity.ok(pages);
+	}
+
 	@GetMapping("/list/self")
 	public ResponseEntity<Page<ProducerResponse>> getAllProducersBySelf(
 			@RequestParam(defaultValue = "0") int page,

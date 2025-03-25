@@ -20,6 +20,7 @@ public interface StorageService {
 	List<Storage> getAllUnarchivedStorages();
 	List<Storage> getAllStoragesByOwner(Long ownerId);
 	Page<StorageResponse> getAllStoragesByOwnerAndRoomIsNull(Pageable pageable);
+	Page<StorageResponse> getAllStoragesByOwnerAndRoomId(Long roomId, Pageable pageable);
 	Storage getStorageById(Long storageId);
 	Storage updateStorage(StorageRequest request);
 	Map<String, String> setActive(Storage storage, boolean active);
