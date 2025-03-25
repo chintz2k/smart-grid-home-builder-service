@@ -142,8 +142,10 @@ public class ConsumerServiceImpl implements ConsumerService {
 	public Page<ConsumerResponse> getAllConsumersByOwnerAndRoomId(Long roomId, Pageable pageable) {
 		Long ownerId = securityService.getCurrentUserId();
 		Page<Consumer> list = consumerRepository.findByRoomId(roomId, pageable);
-		if (!Objects.equals(list.getContent().getFirst().getUserId(), ownerId)) {
-			throw new UnauthorizedAccessException("Unauthorized access to Consumers for Room with ID " + roomId);
+		if (!list.isEmpty()) {
+			if (!Objects.equals(list.getContent().getFirst().getUserId(), ownerId)) {
+				throw new UnauthorizedAccessException("Unauthorized access to Consumers for Room with ID " + roomId);
+			}
 		}
 		return list.map(ConsumerResponse::new);
 	}

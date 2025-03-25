@@ -142,8 +142,10 @@ public class ProducerServiceImpl implements ProducerService {
 	public Page<ProducerResponse> getAllProducersByOwnerAndRoomId(Long roomId, Pageable pageable) {
 		Long userId = securityService.getCurrentUserId();
 		Page<Producer> list = producerRepository.findByRoomId(roomId, pageable);
-		if (!Objects.equals(list.getContent().getFirst().getUserId(), userId)) {
-			throw new UnauthorizedAccessException("Unauthorized access to Producers for Room with ID " + roomId);
+		if (!list.isEmpty()) {
+			if (!Objects.equals(list.getContent().getFirst().getUserId(), userId)) {
+				throw new UnauthorizedAccessException("Unauthorized access to Producers for Room with ID " + roomId);
+			}
 		}
 		return list.map(ProducerResponse::new);
 	}
