@@ -185,6 +185,25 @@ public class ConsumerServiceImpl implements ConsumerService {
 					consumer.setPowerConsumption(request.getPowerConsumption());
 					changed = true;
 				}
+				if (request.getRoomId() != null && !Objects.equals(request.getRoomId(), consumer.getRoom().getId())) {
+					if (consumer.isActive()) {
+						setActive(consumer, false);
+					}
+					Room oldRoom = roomRepository.findById(consumer.getRoom().getId()).orElse(null);
+					Room newRoom = roomRepository.findById(request.getRoomId()).orElse(null);
+					if (oldRoom != null) {
+						oldRoom.removeDevice(consumer);
+						roomRepository.save(oldRoom);
+					}
+					if (newRoom != null) {
+						if (securityService.getCurrentUserId().equals(newRoom.getUserId())) {
+							newRoom.addDevice(consumer);
+							consumer.setRoom(newRoom);
+							roomRepository.save(newRoom);
+						}
+					}
+					changed = true;
+				}
 				if (changed) {
 					consumerRepository.save(consumer);
 					return consumer;

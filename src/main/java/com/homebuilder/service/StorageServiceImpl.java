@@ -185,6 +185,33 @@ public class StorageServiceImpl implements StorageService {
 					storage.setCapacity(request.getCapacity());
 					changed = true;
 				}
+				if (request.getChargingPriority() != storage.getChargingPriority()) {
+					storage.setChargingPriority(request.getChargingPriority());
+					changed = true;
+				}
+				if (request.getConsumingPriority() != storage.getConsumingPriority()) {
+					storage.setConsumingPriority(request.getConsumingPriority());
+					changed = true;
+				}
+				if (request.getRoomId() != null && !Objects.equals(request.getRoomId(), storage.getRoom().getId())) {
+					if (storage.isActive()) {
+						setActive(storage, false);
+					}
+					Room oldRoom = roomRepository.findById(storage.getRoom().getId()).orElse(null);
+					Room newRoom = roomRepository.findById(request.getRoomId()).orElse(null);
+					if (oldRoom != null) {
+						oldRoom.removeDevice(storage);
+						roomRepository.save(oldRoom);
+					}
+					if (newRoom != null) {
+						if (securityService.getCurrentUserId().equals(newRoom.getUserId())) {
+							newRoom.addDevice(storage);
+							storage.setRoom(newRoom);
+							roomRepository.save(newRoom);
+						}
+					}
+					changed = true;
+				}
 				if (changed) {
 					storageRepository.save(storage);
 					return storage;

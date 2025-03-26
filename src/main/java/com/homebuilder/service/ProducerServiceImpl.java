@@ -185,6 +185,25 @@ public class ProducerServiceImpl implements ProducerService {
 					producer.setPowerProduction(request.getPowerProduction());
 					changed = true;
 				}
+				if (request.getRoomId() != null && !Objects.equals(request.getRoomId(), producer.getRoom().getId())) {
+					if (producer.isActive()) {
+						setActive(producer, false);
+					}
+					Room oldRoom = roomRepository.findById(producer.getRoom().getId()).orElse(null);
+					Room newRoom = roomRepository.findById(request.getRoomId()).orElse(null);
+					if (oldRoom != null) {
+						oldRoom.removeDevice(producer);
+						roomRepository.save(oldRoom);
+					}
+					if (newRoom != null) {
+						if (securityService.getCurrentUserId().equals(newRoom.getUserId())) {
+							newRoom.addDevice(producer);
+							producer.setRoom(newRoom);
+							roomRepository.save(newRoom);
+						}
+					}
+					changed = true;
+				}
 				if (changed) {
 					producerRepository.save(producer);
 					return producer;

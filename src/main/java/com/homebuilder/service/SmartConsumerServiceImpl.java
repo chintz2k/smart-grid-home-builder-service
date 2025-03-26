@@ -151,6 +151,25 @@ public class SmartConsumerServiceImpl implements SmartConsumerService {
 					smartConsumer.setPowerConsumption(request.getPowerConsumption());
                     changed = true;
                 }
+                if (request.getRoomId() != null && !Objects.equals(request.getRoomId(), smartConsumer.getRoom().getId())) {
+                    if (smartConsumer.isActive()) {
+                        setActive(smartConsumer, false);
+                    }
+                    Room oldRoom = roomRepository.findById(smartConsumer.getRoom().getId()).orElse(null);
+                    Room newRoom = roomRepository.findById(request.getRoomId()).orElse(null);
+                    if (oldRoom != null) {
+                        oldRoom.removeDevice(smartConsumer);
+                        roomRepository.save(oldRoom);
+                    }
+                    if (newRoom != null) {
+                        if (securityService.getCurrentUserId().equals(newRoom.getUserId())) {
+                            newRoom.addDevice(smartConsumer);
+                            smartConsumer.setRoom(newRoom);
+                            roomRepository.save(newRoom);
+                        }
+                    }
+                    changed = true;
+                }
                 if (changed) {
                     smartConsumerRepository.save(smartConsumer);
                     return smartConsumer;
