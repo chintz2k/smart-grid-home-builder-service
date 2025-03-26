@@ -263,11 +263,13 @@ public class StorageServiceImpl implements StorageService {
 		Storage storage = storageRepository.findById(storageId).orElse(null);
 		if (storage != null) {
 			if (securityService.canAccessDevice(storage)) {
+				storage.getRoom().removeDevice(storage);
+				storage.setRoom(null);
 				Map<String, String> response = Map.of(
 						"message", "Successfully deleted Storage with ID " + storageId,
 						"id", storageId.toString()
 				);
-				storageRepository.delete(storage);
+				storageRepository.deleteById(storageId);
 				return response;
 			}
 			throw new UnauthorizedAccessException("Unauthorized access to Storage with ID " + storageId);

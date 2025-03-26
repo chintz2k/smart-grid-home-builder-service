@@ -139,11 +139,15 @@ public class RoomServiceImpl implements RoomService {
 		Room room = roomRepository.findById(roomId).orElse(null);
 		if (room != null) {
 			if (securityService.canAccessRoom(room)) {
+				for (Device device : room.getDevices()) {
+					device.setRoom(null);
+				}
+				room.setDevices(null);
 				Map<String, String> response = Map.of(
 						"message", "Successfully deleted room with ID " + roomId,
 						"id", roomId.toString()
 				);
-				roomRepository.delete(room);
+				roomRepository.deleteById(roomId);
 				return response;
 			}
 			throw new UnauthorizedAccessException("Unauthorized access to room with ID " + roomId);

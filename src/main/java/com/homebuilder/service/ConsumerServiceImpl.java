@@ -263,11 +263,13 @@ public class ConsumerServiceImpl implements ConsumerService {
 		Consumer consumer = consumerRepository.findById(consumerId).orElse(null);
 		if (consumer != null) {
 			if (securityService.canAccessDevice(consumer)) {
+				consumer.getRoom().removeDevice(consumer);
+				consumer.setRoom(null);
 				Map<String, String> response = Map.of(
 						"message", "Successfully deleted Consumer with ID " + consumerId,
 						"id", consumerId.toString()
 				);
-				consumerRepository.delete(consumer);
+				consumerRepository.deleteById(consumerId);
 				return response;
 			}
 			throw new UnauthorizedAccessException("Unauthorized access to Consumer with ID " + consumerId);

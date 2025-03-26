@@ -229,11 +229,13 @@ public class SmartConsumerServiceImpl implements SmartConsumerService {
         SmartConsumer smartConsumer = smartConsumerRepository.findById(smartConsumerId).orElse(null);
         if (smartConsumer != null) {
             if (securityService.canAccessDevice(smartConsumer)) {
+                smartConsumer.getRoom().removeDevice(smartConsumer);
+                smartConsumer.setRoom(null);
                 Map<String, String> response = Map.of(
                         "message", "Successfully deleted SmartConsumer with ID " + smartConsumerId,
                         "id", smartConsumerId.toString()
                 );
-                smartConsumerRepository.delete(smartConsumer);
+                smartConsumerRepository.deleteById(smartConsumerId);
                 return response;
             }
             throw new UnauthorizedAccessException("Unauthorized access to SmartConsumer with ID " + smartConsumerId);

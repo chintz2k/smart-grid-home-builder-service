@@ -170,7 +170,7 @@ public class SmartConsumerProgramServiceImpl implements SmartConsumerProgramServ
 						"message", "Successfully deleted SmartConsumerProgram with ID " + smartConsumerProgramId,
 						"id", smartConsumerProgramId.toString()
 				);
-				smartConsumerProgramRepository.delete(program);
+				smartConsumerProgramRepository.deleteById(smartConsumerProgramId);
 				return response;
 			}
 			throw new UnauthorizedAccessException("Unauthorized access to SmartConsumerProgram with ID " + smartConsumerProgramId);

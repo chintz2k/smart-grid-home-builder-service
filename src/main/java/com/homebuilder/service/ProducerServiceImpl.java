@@ -263,11 +263,13 @@ public class ProducerServiceImpl implements ProducerService {
 		Producer producer = producerRepository.findById(producerId).orElse(null);
 		if (producer != null) {
 			if (securityService.canAccessDevice(producer)) {
+				producer.getRoom().removeDevice(producer);
+				producer.setRoom(null);
 				Map<String, String> response = Map.of(
 						"message", "Successfully deleted Producer with ID " + producerId,
 						"id", producerId.toString()
 				);
-				producerRepository.delete(producer);
+				producerRepository.deleteById(producerId);
 				return response;
 			}
 			throw new UnauthorizedAccessException("Unauthorized access to Producer with ID " + producerId);

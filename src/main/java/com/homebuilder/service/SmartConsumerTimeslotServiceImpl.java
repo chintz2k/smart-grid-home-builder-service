@@ -168,7 +168,7 @@ public class SmartConsumerTimeslotServiceImpl implements SmartConsumerTimeslotSe
 						"message", "Successfully deleted SmartConsumerTimeslot with ID " + smartConsumerTimeslotId,
 						"id", smartConsumerTimeslotId.toString()
 				);
-				smartConsumerTimeslotRepository.delete(timeslot);
+				smartConsumerTimeslotRepository.deleteById(smartConsumerTimeslotId);
 				return response;
 			}
 			throw new UnauthorizedAccessException("Unauthorized access to SmartConsumerTimeslot with ID " + smartConsumerTimeslotId);
