@@ -16,6 +16,7 @@ public class ProducerResponse {
 	private final double powerProduction;
 	private final boolean renewable;
 	private final String powerType;
+	private final Long roomId;
 
 	public ProducerResponse(Producer producer) {
 		if (producer == null) {
@@ -29,6 +30,7 @@ public class ProducerResponse {
 		this.powerProduction = producer.getPowerProduction();
 		this.renewable = producer.isRenewable();
 		this.powerType = producer.getPowerType();
+		this.roomId = producer.getRoom().getId();
 	}
 
 	public Long getId() {
@@ -61,5 +63,9 @@ public class ProducerResponse {
 
 	public String getPowerType() {
 		return powerType;
+	}
+
+	public Long getRoomId() {
+		return roomId;
 	}
 }

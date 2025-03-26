@@ -14,6 +14,7 @@ public class ConsumerResponse {
 	private final boolean active;
 	private final boolean archived;
 	private final double powerConsumption;
+	private final Long roomId;
 
 	public ConsumerResponse(Consumer consumer) {
 		if (consumer == null) {
@@ -25,6 +26,7 @@ public class ConsumerResponse {
 		this.active = consumer.isActive();
 		this.archived = consumer.isArchived();
 		this.powerConsumption = consumer.getPowerConsumption();
+		this.roomId = consumer.getRoom().getId();
 	}
 
 	public Long getId() {
@@ -49,5 +51,9 @@ public class ConsumerResponse {
 
 	public double getPowerConsumption() {
 		return powerConsumption;
+	}
+
+	public Long getRoomId() {
+		return roomId;
 	}
 }

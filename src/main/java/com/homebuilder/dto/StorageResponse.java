@@ -16,6 +16,7 @@ public class StorageResponse {
 	private final double capacity;
 	private final int chargingPriority;
 	private final int consumingPriority;
+	private final Long roomId;
 
 	public StorageResponse(Storage storage) {
 		if (storage == null) {
@@ -29,6 +30,7 @@ public class StorageResponse {
 		this.capacity = storage.getCapacity();
 		this.chargingPriority = storage.getChargingPriority();
 		this.consumingPriority = storage.getConsumingPriority();
+		this.roomId = storage.getRoom().getId();
 	}
 
 	public Long getId() {
@@ -61,5 +63,9 @@ public class StorageResponse {
 
 	public int getConsumingPriority() {
 		return consumingPriority;
+	}
+
+	public Long getRoomId() {
+		return roomId;
 	}
 }

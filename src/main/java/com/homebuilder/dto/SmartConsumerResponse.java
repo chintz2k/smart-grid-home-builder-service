@@ -21,6 +21,7 @@ public class SmartConsumerResponse {
 	private final double powerConsumption;
 	private final List<Long> smartConsumerPrograms = new ArrayList<>();
 	private final List<Long> timeslots = new ArrayList<>();
+	private final Long roomId;
 
 	public SmartConsumerResponse(SmartConsumer smartConsumer) {
 		if (smartConsumer == null) {
@@ -38,6 +39,7 @@ public class SmartConsumerResponse {
 		for (SmartConsumerTimeslot timeslot : smartConsumer.getTimeslotList()) {
 			timeslots.add(timeslot.getId());
 		}
+		this.roomId = smartConsumer.getRoom().getId();
 	}
 
 	public Long getId() {
@@ -70,5 +72,9 @@ public class SmartConsumerResponse {
 
 	public List<Long> getTimeslots() {
 		return timeslots;
+	}
+
+	public Long getRoomId() {
+		return roomId;
 	}
 }
