@@ -180,14 +180,14 @@ public class ConsumerServiceImpl implements ConsumerService {
 				}
 				if (request.getPowerConsumption() != consumer.getPowerConsumption()) {
 					if (consumer.isActive()) {
-						setActive(consumer, false);
+						setActive(consumer, false, true);
 					}
 					consumer.setPowerConsumption(request.getPowerConsumption());
 					changed = true;
 				}
 				if (request.getRoomId() != null && !Objects.equals(request.getRoomId(), consumer.getRoom().getId())) {
 					if (consumer.isActive()) {
-						setActive(consumer, false);
+						setActive(consumer, false, true);
 					}
 					Room oldRoom = roomRepository.findById(consumer.getRoom().getId()).orElse(null);
 					Room newRoom = roomRepository.findById(request.getRoomId()).orElse(null);
@@ -217,7 +217,7 @@ public class ConsumerServiceImpl implements ConsumerService {
 
 	@Override
 	@Transactional
-	public Map<String, String> setActive(Consumer consumer, boolean active) {
+	public Map<String, String> setActive(Consumer consumer, boolean active, boolean sendEvent) {
 		if (consumer != null) {
 			if (securityService.canAccessDevice(consumer)) {
 				if (consumer.isArchived()) {
@@ -231,15 +231,17 @@ public class ConsumerServiceImpl implements ConsumerService {
 				}
 				consumer.setActive(active);
 				consumerRepository.save(consumer);
-				String event = String.format(
-						Locale.ENGLISH,
-						"{\"deviceId\": %d, \"ownerId\": %d, \"commercial\": %b, \"active\": %b, \"powerConsumption\": %f, \"timestamp\": \"%s\"}",
-						consumer.getId(), consumer.getUserId(), securityService.isCurrentUserACommercialUser(), active, consumer.getPowerConsumption(), Instant.now());
-				kafkaTemplate.send("consumer-events", event).whenComplete((result, exception) -> {
-					if (exception != null) {
-						logger.error("Fehler beim Senden des Events: {}", exception.getMessage());
-					}
-				});
+				if (sendEvent) {
+					String event = String.format(
+							Locale.ENGLISH,
+							"{\"deviceId\": %d, \"ownerId\": %d, \"commercial\": %b, \"active\": %b, \"powerConsumption\": %f, \"timestamp\": \"%s\"}",
+							consumer.getId(), consumer.getUserId(), securityService.isCurrentUserACommercialUser(), active, consumer.getPowerConsumption(), Instant.now());
+					kafkaTemplate.send("consumer-events", event).whenComplete((result, exception) -> {
+						if (exception != null) {
+							logger.error("Fehler beim Senden des Events: {}", exception.getMessage());
+						}
+					});
+				}
 				return Map.of(
 						"message", "Successfully updated Consumer with ID " + consumer.getId(),
 						"id", consumer.getId().toString(),
@@ -259,7 +261,7 @@ public class ConsumerServiceImpl implements ConsumerService {
 				if (!consumer.isArchived()) {
 					consumer.setArchived(true);
 					if (consumer.isActive()) {
-						setActive(consumer, false);
+						setActive(consumer, false, true);
 					}
 					Map<String, String> response = Map.of(
 							"message", "Successfully archived Consumer with ID " + consumerId,

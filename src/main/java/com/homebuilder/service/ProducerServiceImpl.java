@@ -180,14 +180,14 @@ public class ProducerServiceImpl implements ProducerService {
 				}
 				if (request.getPowerProduction() != producer.getPowerProduction()) {
 					if (producer.isActive()) {
-						setActive(producer, false);
+						setActive(producer, false, true);
 					}
 					producer.setPowerProduction(request.getPowerProduction());
 					changed = true;
 				}
 				if (request.getRoomId() != null && !Objects.equals(request.getRoomId(), producer.getRoom().getId())) {
 					if (producer.isActive()) {
-						setActive(producer, false);
+						setActive(producer, false, true);
 					}
 					Room oldRoom = roomRepository.findById(producer.getRoom().getId()).orElse(null);
 					Room newRoom = roomRepository.findById(request.getRoomId()).orElse(null);
@@ -217,7 +217,7 @@ public class ProducerServiceImpl implements ProducerService {
 
 	@Override
 	@Transactional
-	public Map<String, String> setActive(Producer producer, boolean active) {
+	public Map<String, String> setActive(Producer producer, boolean active, boolean sendEvent) {
 		if (producer != null) {
 			if (securityService.canAccessDevice(producer)) {
 				if (producer.isArchived()) {
@@ -231,15 +231,17 @@ public class ProducerServiceImpl implements ProducerService {
 				}
 				producer.setActive(active);
 				producerRepository.save(producer);
-				String event = String.format(
-						Locale.ENGLISH,
-						"{\"deviceId\": %d, \"ownerId\": %d, \"commercial\": %b, \"active\": %b, \"powerType\": \"%s\", \"renewable\": %b, \"powerProduction\": %f, \"timestamp\": \"%s\"}",
-						producer.getId(), producer.getUserId(), securityService.isCurrentUserACommercialUser(), active, producer.getPowerType(), producer.isRenewable(), producer.getPowerProduction(), Instant.now());
-				kafkaTemplate.send("producer-events", event).whenComplete((result, exception) -> {
-					if (exception != null) {
-						logger.error("Fehler beim Senden des Events: {}", exception.getMessage());
-					}
-				});
+				if (sendEvent) {
+					String event = String.format(
+							Locale.ENGLISH,
+							"{\"deviceId\": %d, \"ownerId\": %d, \"commercial\": %b, \"active\": %b, \"powerType\": \"%s\", \"renewable\": %b, \"powerProduction\": %f, \"timestamp\": \"%s\"}",
+							producer.getId(), producer.getUserId(), securityService.isCurrentUserACommercialUser(), active, producer.getPowerType(), producer.isRenewable(), producer.getPowerProduction(), Instant.now());
+					kafkaTemplate.send("producer-events", event).whenComplete((result, exception) -> {
+						if (exception != null) {
+							logger.error("Fehler beim Senden des Events: {}", exception.getMessage());
+						}
+					});
+				}
 				return Map.of(
 						"message", "Successfully updated Producer with ID " + producer.getId(),
 						"id", producer.getId().toString(),
@@ -259,7 +261,7 @@ public class ProducerServiceImpl implements ProducerService {
 				if (!producer.isArchived()) {
 					producer.setArchived(true);
 					if (producer.isActive()) {
-						setActive(producer, false);
+						setActive(producer, false, true);
 					}
 					Map<String, String> response = Map.of(
 							"message", "Successfully archived Producer with ID " + producerId,

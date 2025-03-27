@@ -23,7 +23,7 @@ public interface StorageService {
 	Page<StorageResponse> getAllStoragesByOwnerAndRoomId(Long roomId, Pageable pageable);
 	Storage getStorageById(Long storageId);
 	Storage updateStorage(StorageRequest request);
-	Map<String, String> setActive(Storage storage, boolean active);
+	Map<String, String> setActive(Storage storage, boolean active, boolean sendEvent);
 	Map<String, String> archiveStorage(Long storageId);
 	Map<String, String> deleteStorage(Long storageId);
 	Map<String, String> deleteAllStoragesByOwnerId(Long ownerId);

@@ -55,7 +55,13 @@ public class DeviceController {
 
 	@PutMapping("/{deviceId}/toggle")
 	public ResponseEntity<Map<String, String>> setActive(@PathVariable Long deviceId, @RequestParam boolean active) {
-		Map<String, String> success = deviceService.setActive(deviceId, active);
+		Map<String, String> success = deviceService.setActive(deviceId, active, true);
+		return ResponseEntity.ok().body(success);
+	}
+
+	@PutMapping("/{deviceId}/toggleNoSendEvent")
+	public ResponseEntity<Map<String, String>> setActiveNoSendEvent(@PathVariable Long deviceId, @RequestParam boolean active) {
+		Map<String, String> success = deviceService.setActive(deviceId, active, false);
 		return ResponseEntity.ok().body(success);
 	}
 

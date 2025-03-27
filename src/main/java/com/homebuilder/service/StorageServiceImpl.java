@@ -180,7 +180,7 @@ public class StorageServiceImpl implements StorageService {
 				}
 				if (request.getCapacity() != storage.getCapacity()) {
 					if (storage.isActive()) {
-						setActive(storage, false);
+						setActive(storage, false, true);
 					}
 					storage.setCapacity(request.getCapacity());
 					changed = true;
@@ -195,7 +195,7 @@ public class StorageServiceImpl implements StorageService {
 				}
 				if (request.getRoomId() != null && !Objects.equals(request.getRoomId(), storage.getRoom().getId())) {
 					if (storage.isActive()) {
-						setActive(storage, false);
+						setActive(storage, false, true);
 					}
 					Room oldRoom = roomRepository.findById(storage.getRoom().getId()).orElse(null);
 					Room newRoom = roomRepository.findById(request.getRoomId()).orElse(null);
@@ -225,7 +225,7 @@ public class StorageServiceImpl implements StorageService {
 
 	@Override
 	@Transactional
-	public Map<String, String> setActive(Storage storage, boolean active) {
+	public Map<String, String> setActive(Storage storage, boolean active, boolean sendEvent) {
 		if (storage != null) {
 			if (securityService.canAccessDevice(storage)) {
 				if (storage.isArchived()) {
@@ -239,15 +239,17 @@ public class StorageServiceImpl implements StorageService {
 				}
 				storage.setActive(active);
 				storageRepository.save(storage);
-				String event = String.format(
-						Locale.ENGLISH,
-						"{\"deviceId\": %d, \"ownerId\": %d, \"commercial\": %b, \"active\": %b, \"capacity\": %f, \"currentCharge\": %f, \"chargingPriority\": %d, \"consumingPriority\": %d, \"timestamp\": \"%s\"}",
-						storage.getId(), storage.getUserId(), securityService.isCurrentUserACommercialUser(), active, storage.getCapacity(), storage.getCurrentCharge(), storage.getChargingPriority(), storage.getConsumingPriority(), Instant.now());
-				kafkaTemplate.send("storage-events", event).whenComplete((result, exception) -> {
-					if (exception != null) {
-						logger.error("Fehler beim Senden des Events: {}", exception.getMessage());
-					}
-				});
+				if (sendEvent) {
+					String event = String.format(
+							Locale.ENGLISH,
+							"{\"deviceId\": %d, \"ownerId\": %d, \"commercial\": %b, \"active\": %b, \"capacity\": %f, \"currentCharge\": %f, \"chargingPriority\": %d, \"consumingPriority\": %d, \"timestamp\": \"%s\"}",
+							storage.getId(), storage.getUserId(), securityService.isCurrentUserACommercialUser(), active, storage.getCapacity(), storage.getCurrentCharge(), storage.getChargingPriority(), storage.getConsumingPriority(), Instant.now());
+					kafkaTemplate.send("storage-events", event).whenComplete((result, exception) -> {
+						if (exception != null) {
+							logger.error("Fehler beim Senden des Events: {}", exception.getMessage());
+						}
+					});
+				}
 				return Map.of(
 						"message", "Successfully updated Storage with ID " + storage.getId(),
 						"id", storage.getId().toString(),
@@ -267,7 +269,7 @@ public class StorageServiceImpl implements StorageService {
 				if (!storage.isArchived()) {
 					storage.setArchived(true);
 					if (storage.isActive()) {
-						setActive(storage, false);
+						setActive(storage, false, true);
 					}
 					Map<String, String> response = Map.of(
 							"message", "Successfully archived Storage with ID " + storageId,

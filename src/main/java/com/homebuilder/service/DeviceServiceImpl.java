@@ -98,12 +98,12 @@ public class DeviceServiceImpl implements DeviceService {
 
 	@Override
 	@Transactional
-	public Map<String, String> setActive(Long deviceId, boolean active) {
+	public Map<String, String> setActive(Long deviceId, boolean active, boolean sendEvent) {
 		Device device = getDeviceById(deviceId);
 		return switch (device) {
-			case Consumer ignored -> consumerService.setActive((Consumer) device, active);
-			case Producer ignored -> producerService.setActive((Producer) device, active);
-			case Storage ignored -> storageService.setActive((Storage) device, active);
+			case Consumer ignored -> consumerService.setActive((Consumer) device, active, sendEvent);
+			case Producer ignored -> producerService.setActive((Producer) device, active, sendEvent);
+			case Storage ignored -> storageService.setActive((Storage) device, active, sendEvent);
 			case null, default -> Map.of("message", "Device with ID " + deviceId + " not found");
 		};
 	}

@@ -23,7 +23,7 @@ public interface ConsumerService {
 	Page<ConsumerResponse> getAllConsumersByOwnerAndRoomId(Long roomId, Pageable pageable);
 	Consumer getConsumerById(Long consumerId);
 	Consumer updateConsumer(ConsumerRequest request);
-	Map<String, String> setActive(Consumer consumer, boolean active);
+	Map<String, String> setActive(Consumer consumer, boolean active, boolean sendEvent);
 	Map<String, String> archiveConsumer(Long consumerId);
 	Map<String, String> deleteConsumer(Long consumerId);
 	Map<String, String> deleteAllConsumersByOwnerId(Long ownerId);

@@ -146,14 +146,14 @@ public class SmartConsumerServiceImpl implements SmartConsumerService {
                 }
                 if (request.getPowerConsumption() != smartConsumer.getPowerConsumption()) {
 					if (smartConsumer.isActive()) {
-						setActive(smartConsumer, false);
+						setActive(smartConsumer, false, true);
 					}
 					smartConsumer.setPowerConsumption(request.getPowerConsumption());
                     changed = true;
                 }
                 if (request.getRoomId() != null && !Objects.equals(request.getRoomId(), smartConsumer.getRoom().getId())) {
                     if (smartConsumer.isActive()) {
-                        setActive(smartConsumer, false);
+                        setActive(smartConsumer, false, true);
                     }
                     Room oldRoom = roomRepository.findById(smartConsumer.getRoom().getId()).orElse(null);
                     Room newRoom = roomRepository.findById(request.getRoomId()).orElse(null);
@@ -183,7 +183,7 @@ public class SmartConsumerServiceImpl implements SmartConsumerService {
 
     @Override
     @Transactional
-    public Map<String, String> setActive(SmartConsumer smartConsumer, boolean active) {
+    public Map<String, String> setActive(SmartConsumer smartConsumer, boolean active, boolean sendEvent) {
         if (smartConsumer != null) {
             if (securityService.canAccessDevice(smartConsumer)) {
                 if (smartConsumer.isArchived()) {
@@ -197,16 +197,18 @@ public class SmartConsumerServiceImpl implements SmartConsumerService {
                 }
                 smartConsumer.setActive(active);
                 smartConsumerRepository.save(smartConsumer);
-                String event = String.format(
-                        Locale.ENGLISH,
-                        "{\"deviceId\": %d, \"ownerId\": %d, \"commercial\": %b, \"active\": %b, \"powerConsumption\": %f, \"timestamp\": \"%s\"}",
-                        smartConsumer.getId(), smartConsumer.getUserId(), securityService.isCurrentUserACommercialUser(), active, smartConsumer.getPowerConsumption(), Instant.now());
-                kafkaTemplate.send("consumer-events", event).whenComplete((result, exception) -> {
-                    if (exception != null) {
-                        logger.error("Fehler beim Senden des Events: {}", exception.getMessage());
-                    }
-                });
-                return Map.of(
+				if (sendEvent) {
+					String event = String.format(
+							Locale.ENGLISH,
+							"{\"deviceId\": %d, \"ownerId\": %d, \"commercial\": %b, \"active\": %b, \"powerConsumption\": %f, \"timestamp\": \"%s\"}",
+							smartConsumer.getId(), smartConsumer.getUserId(), securityService.isCurrentUserACommercialUser(), active, smartConsumer.getPowerConsumption(), Instant.now());
+					kafkaTemplate.send("consumer-events", event).whenComplete((result, exception) -> {
+						if (exception != null) {
+							logger.error("Fehler beim Senden des Events: {}", exception.getMessage());
+						}
+					});
+				}
+				return Map.of(
                         "message", "Successfully updated SmartConsumer with ID " + smartConsumer.getId(),
                         "id", smartConsumer.getId().toString(),
                         "active", smartConsumer.isActive() ? "true" : "false"
@@ -225,7 +227,7 @@ public class SmartConsumerServiceImpl implements SmartConsumerService {
                 if (!smartConsumer.isArchived()) {
                     smartConsumer.setArchived(true);
                     if (smartConsumer.isActive()) {
-                        setActive(smartConsumer, false);
+                        setActive(smartConsumer, false, true);
                     }
                     Map<String, String> response = Map.of(
                             "message", "Successfully archived SmartConsumer with ID " + smartConsumerId,

@@ -23,7 +23,7 @@ public interface ProducerService {
 	Page<ProducerResponse> getAllProducersByOwnerAndRoomId(Long roomId, Pageable pageable);
 	Producer getProducerById(Long producerId);
 	Producer updateProducer(ProducerRequest request);
-	Map<String, String> setActive(Producer producer, boolean active);
+	Map<String, String> setActive(Producer producer, boolean active, boolean sendEvent);
 	Map<String, String> archiveProducer(Long producerId);
 	Map<String, String> deleteProducer(Long producerId);
 	Map<String, String> deleteAllProducersByOwnerId(Long ownerId);
