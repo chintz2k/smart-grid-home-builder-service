@@ -221,13 +221,22 @@ public class ConsumerServiceImpl implements ConsumerService {
 		if (consumer != null) {
 			if (securityService.canAccessDevice(consumer)) {
 				if (consumer.isArchived()) {
-					throw new CreateDeviceFailedException("Consumer with ID " + consumer.getId() + " is archived and cannot be activated or deactivated");
+					return Map.of(
+							"warning", "Consumer is archived and cannot be activated or deactivated",
+							"id", consumer.getId().toString()
+					);
 				}
 				if (consumer.isActive() && active) {
-					throw new CreateDeviceFailedException("Consumer with ID " + consumer.getId() + " is already active");
+					return Map.of(
+							"warning", "Consumer is already active",
+							"id", consumer.getId().toString()
+					);
 				}
 				if (!consumer.isActive() && !active) {
-					throw new CreateDeviceFailedException("Consumer with ID " + consumer.getId() + " is already inactive");
+					return Map.of(
+							"warning", "Consumer is already inactive",
+							"id", consumer.getId().toString()
+					);
 				}
 				consumer.setActive(active);
 				consumerRepository.save(consumer);

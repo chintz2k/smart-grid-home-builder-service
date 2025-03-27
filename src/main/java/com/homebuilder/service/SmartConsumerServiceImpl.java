@@ -187,13 +187,22 @@ public class SmartConsumerServiceImpl implements SmartConsumerService {
         if (smartConsumer != null) {
             if (securityService.canAccessDevice(smartConsumer)) {
                 if (smartConsumer.isArchived()) {
-                    throw new CreateDeviceFailedException("SmartConsumer with ID " + smartConsumer.getId() + " is archived and cannot be activated or deactivated");
+                    return Map.of(
+                            "warning", "SmartConsumer is archived and cannot be activated or deactivated",
+                            "id", smartConsumer.getId().toString()
+                    );
                 }
                 if (smartConsumer.isActive() && active) {
-                    throw new CreateDeviceFailedException("SmartConsumer with ID " + smartConsumer.getId() + " is already active");
+                    return Map.of(
+                            "warning", "SmartConsumer is already active",
+                            "id", smartConsumer.getId().toString()
+                    );
                 }
                 if (!smartConsumer.isActive() && !active) {
-                    throw new CreateDeviceFailedException("SmartConsumer with ID " + smartConsumer.getId() + " is already inactive");
+                    return Map.of(
+                            "warning", "SmartConsumer is already inactive",
+                            "id", smartConsumer.getId().toString()
+                    );
                 }
                 smartConsumer.setActive(active);
                 smartConsumerRepository.save(smartConsumer);

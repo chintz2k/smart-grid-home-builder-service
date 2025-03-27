@@ -221,13 +221,22 @@ public class ProducerServiceImpl implements ProducerService {
 		if (producer != null) {
 			if (securityService.canAccessDevice(producer)) {
 				if (producer.isArchived()) {
-					throw new CreateDeviceFailedException("Producer with ID " + producer.getId() + " is archived and cannot be activated or deactivated");
+					return Map.of(
+							"warning", "Producer is archived and cannot be activated or deactivated",
+							"id", producer.getId().toString()
+					);
 				}
 				if (producer.isActive() && active) {
-					throw new CreateDeviceFailedException("Producer with ID " + producer.getId() + " is already active");
+					return Map.of(
+							"warning", "Producer is already active",
+							"id", producer.getId().toString()
+					);
 				}
 				if (!producer.isActive() && !active) {
-					throw new CreateDeviceFailedException("Producer with ID " + producer.getId() + " is already inactive");
+					return Map.of(
+							"warning", "Producer is already inactive",
+							"id", producer.getId().toString()
+					);
 				}
 				producer.setActive(active);
 				producerRepository.save(producer);

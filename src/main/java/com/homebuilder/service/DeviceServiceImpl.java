@@ -104,7 +104,7 @@ public class DeviceServiceImpl implements DeviceService {
 			case Consumer ignored -> consumerService.setActive((Consumer) device, active, sendEvent);
 			case Producer ignored -> producerService.setActive((Producer) device, active, sendEvent);
 			case Storage ignored -> storageService.setActive((Storage) device, active, sendEvent);
-			case null, default -> Map.of("message", "Device with ID " + deviceId + " not found");
+			case null, default -> Map.of("error", "Device with ID " + deviceId + " not found");
 		};
 	}
 

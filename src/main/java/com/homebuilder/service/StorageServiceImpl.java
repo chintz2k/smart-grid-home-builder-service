@@ -229,13 +229,22 @@ public class StorageServiceImpl implements StorageService {
 		if (storage != null) {
 			if (securityService.canAccessDevice(storage)) {
 				if (storage.isArchived()) {
-					throw new CreateDeviceFailedException("Storage with ID " + storage.getId() + " is archived and cannot be activated or deactivated");
+					return Map.of(
+							"warning", "Storage is archived and cannot be activated or deactivated",
+							"id", storage.getId().toString()
+					);
 				}
 				if (storage.isActive() && active) {
-					throw new CreateDeviceFailedException("Storage with ID " + storage.getId() + " is already active");
+					return Map.of(
+							"warning", "Storage is already active",
+							"id", storage.getId().toString()
+					);
 				}
 				if (!storage.isActive() && !active) {
-					throw new CreateDeviceFailedException("Storage with ID " + storage.getId() + " is already inactive");
+					return Map.of(
+							"warning", "Storage is already inactive",
+							"id", storage.getId().toString()
+					);
 				}
 				storage.setActive(active);
 				storageRepository.save(storage);
