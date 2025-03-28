@@ -2,6 +2,7 @@ package com.homebuilder.service;
 
 import com.homebuilder.dto.SmartConsumerProgramRequest;
 import com.homebuilder.dto.SmartConsumerRequest;
+import com.homebuilder.dto.SmartConsumerResponse;
 import com.homebuilder.entity.Room;
 import com.homebuilder.entity.SmartConsumer;
 import com.homebuilder.exception.CreateDeviceFailedException;
@@ -14,7 +15,9 @@ import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -284,5 +287,13 @@ public class SmartConsumerServiceImpl implements SmartConsumerService {
         return Map.of(
                 "message", "Successfully deleted all SmartConsumers for Owner with ID " + ownerId
         );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<SmartConsumerResponse> getAllUnarchivedByUser(Pageable pageable) {
+        Long userId = securityService.getCurrentUserId();
+        Page<SmartConsumer> smartConsumerPage = smartConsumerRepository.findByUserIdAndArchivedFalse(userId, pageable);
+        return smartConsumerPage.map(SmartConsumerResponse::new);
     }
 }

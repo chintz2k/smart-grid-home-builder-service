@@ -1,6 +1,7 @@
 package com.homebuilder.service;
 
 import com.homebuilder.dto.SmartConsumerProgramRequest;
+import com.homebuilder.dto.SmartConsumerProgramResponse;
 import com.homebuilder.entity.SmartConsumer;
 import com.homebuilder.entity.SmartConsumerProgram;
 import com.homebuilder.exception.CreateDeviceFailedException;
@@ -11,7 +12,9 @@ import com.homebuilder.repository.SmartConsumerRepository;
 import com.homebuilder.security.SecurityService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -92,6 +95,34 @@ public class SmartConsumerProgramServiceImpl implements SmartConsumerProgramServ
 		} else {
 			throw new UnauthorizedAccessException("Unauthorized access to SmartConsumerPrograms for Owner with ID " + ownerId);
 		}
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public Page<SmartConsumerProgramResponse> getAllByUserId(Long userId, Pageable pageable) {
+		if (userId != null) {
+			if (securityService.isCurrentUserAdminOrSystem()) {
+				Page<SmartConsumerProgram> pages = smartConsumerProgramRepository.findAllByUserId(userId, pageable);
+				return pages.map(SmartConsumerProgramResponse::new);
+			}
+		}
+		userId = securityService.getCurrentUserId();
+		Page<SmartConsumerProgram> pages = smartConsumerProgramRepository.findAllByUserId(userId, pageable);
+		return pages.map(SmartConsumerProgramResponse::new);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public Page<SmartConsumerProgramResponse> getAllByUserIdAndByConsumerId(Long userId, Long consumerId, Pageable pageable) {
+		if (userId != null) {
+			if (securityService.isCurrentUserAdminOrSystem()) {
+				Page<SmartConsumerProgram> pages = smartConsumerProgramRepository.findAllByUserIdAndSmartConsumerId(userId, consumerId, pageable);
+				return pages.map(SmartConsumerProgramResponse::new);
+			}
+		}
+		userId = securityService.getCurrentUserId();
+		Page<SmartConsumerProgram> pages = smartConsumerProgramRepository.findAllByUserIdAndSmartConsumerId(userId, consumerId, pageable);
+		return pages.map(SmartConsumerProgramResponse::new);
 	}
 
 	@Override

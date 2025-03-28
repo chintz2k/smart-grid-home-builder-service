@@ -18,4 +18,8 @@ public interface SmartConsumerProgramRepository extends JpaRepository<SmartConsu
 
     List<SmartConsumerProgram> findAllByUserIdAndArchivedFalse(Long userId);
 
+    Page<SmartConsumerProgram> findAllByUserId(Long userId, Pageable pageable);
+
+    Page<SmartConsumerProgram> findAllByUserIdAndSmartConsumerId(Long userId, Long smartConsumerId, Pageable pageable);
+
 }

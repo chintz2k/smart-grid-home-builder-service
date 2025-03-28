@@ -6,6 +6,8 @@ import com.homebuilder.entity.SmartConsumerTimeslot;
 import com.homebuilder.service.SmartConsumerTimeslotService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -47,6 +49,31 @@ public class SmartConsumerTimeslotController {
 		SmartConsumerTimeslot smartConsumerTimeslot = smartConsumerTimeslotService.getSmartConsumerTimeslotById(smartConsumerTimeslotId);
 		SmartConsumerTimeslotResponse dto = new SmartConsumerTimeslotResponse(smartConsumerTimeslot, timeZone);
 		return ResponseEntity.ok(dto);
+	}
+
+	@GetMapping("/self/all")
+	public ResponseEntity<Page<SmartConsumerTimeslotResponse>> getAllByUserId(
+			@RequestHeader(value = "Time-Zone") String timeZone,
+			@RequestParam(required = false) Long userId,
+			@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "20") int size
+	) {
+		Page<SmartConsumerTimeslot> timeslotPage = smartConsumerTimeslotService.getAllByUserId(userId, PageRequest.of(page, size));
+		Page<SmartConsumerTimeslotResponse> dtoList = timeslotPage.map(timeslot -> new SmartConsumerTimeslotResponse(timeslot, timeZone));
+		return ResponseEntity.ok(dtoList);
+	}
+
+	@GetMapping("/self/{consumerId}")
+	public ResponseEntity<Page<SmartConsumerTimeslotResponse>> getAllByUserIdAndBySmartConsumerId(
+			@RequestHeader(value = "Time-Zone") String timeZone,
+			@PathVariable Long consumerId,
+			@RequestParam(required = false) Long userId,
+			@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "20") int size
+	) {
+		Page<SmartConsumerTimeslot> timeslotPage = smartConsumerTimeslotService.getAllByUserIdAndByConsumerId(userId, consumerId, PageRequest.of(page, size));
+		Page<SmartConsumerTimeslotResponse> dtoList = timeslotPage.map(timeslot -> new SmartConsumerTimeslotResponse(timeslot, timeZone));
+		return ResponseEntity.ok(dtoList);
 	}
 
 	@PutMapping("/update")

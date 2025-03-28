@@ -14,7 +14,9 @@ import com.homebuilder.repository.SmartConsumerTimeslotRepository;
 import com.homebuilder.security.SecurityService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -104,6 +106,30 @@ public class SmartConsumerTimeslotServiceImpl implements SmartConsumerTimeslotSe
 		} else {
 			throw new UnauthorizedAccessException("Unauthorized access to SmartConsumerTimeslot for Owner with ID " + securityService.getCurrentUserId());
 		}
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public Page<SmartConsumerTimeslot> getAllByUserId(Long userId, Pageable pageable) {
+		if (userId != null) {
+			if (securityService.isCurrentUserAdminOrSystem()) {
+				return smartConsumerTimeslotRepository.findAllByUserId(userId, pageable);
+			}
+		}
+		userId = securityService.getCurrentUserId();
+		return smartConsumerTimeslotRepository.findAllByUserId(userId, pageable);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public Page<SmartConsumerTimeslot> getAllByUserIdAndByConsumerId(Long userId, Long consumerId, Pageable pageable) {
+		if (userId != null) {
+			if (securityService.isCurrentUserAdminOrSystem()) {
+				return smartConsumerTimeslotRepository.findAllByUserIdAndSmartConsumerId(userId, consumerId, pageable);
+			}
+		}
+		userId = securityService.getCurrentUserId();
+		return smartConsumerTimeslotRepository.findAllByUserIdAndSmartConsumerId(userId, consumerId, pageable);
 	}
 
 	@Override

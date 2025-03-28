@@ -6,6 +6,8 @@ import com.homebuilder.entity.SmartConsumerProgram;
 import com.homebuilder.service.SmartConsumerProgramService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -47,6 +49,25 @@ public class SmartConsumerProgramController {
 		List<SmartConsumerProgram> smartConsumerProgramList = smartConsumerProgramService.getAllSmartConsumerPrograms();
 		List<SmartConsumerProgramResponse> dtoList = smartConsumerProgramList.stream().map(SmartConsumerProgramResponse::new).toList();
 		return ResponseEntity.ok(dtoList);
+	}
+
+	@GetMapping("/self/all")
+	public ResponseEntity<Page<SmartConsumerProgramResponse>> getAllByUserId(
+			@RequestParam(required = false) Long userId,
+			@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "20") int size
+	) {
+		return ResponseEntity.ok(smartConsumerProgramService.getAllByUserId(userId, PageRequest.of(page, size)));
+	}
+
+	@GetMapping("/self/{consumerId}")
+	public ResponseEntity<Page<SmartConsumerProgramResponse>> getAllByUserIdAndByConsumerId(
+			@PathVariable Long consumerId,
+			@RequestParam(required = false) Long userId,
+			@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "20") int size
+	) {
+		return ResponseEntity.ok(smartConsumerProgramService.getAllByUserIdAndByConsumerId(userId, consumerId, PageRequest.of(page, size)));
 	}
 
 	@GetMapping("/{smartConsumerProgramId}")

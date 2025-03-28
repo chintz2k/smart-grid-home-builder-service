@@ -1,7 +1,10 @@
 package com.homebuilder.service;
 
 import com.homebuilder.dto.SmartConsumerRequest;
+import com.homebuilder.dto.SmartConsumerResponse;
 import com.homebuilder.entity.SmartConsumer;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Map;
@@ -21,5 +24,7 @@ public interface SmartConsumerService {
 	Map<String, String> archiveSmartConsumer(Long smartConsumerId);
 	Map<String, String> deleteSmartConsumer(Long smartConsumerId);
 	Map<String, String> deleteAllSmartConsumersByOwnerId(Long ownerId);
+
+	Page<SmartConsumerResponse> getAllUnarchivedByUser(Pageable pageable);
 
 }

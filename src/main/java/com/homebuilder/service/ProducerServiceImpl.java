@@ -347,6 +347,7 @@ public class ProducerServiceImpl implements ProducerService {
 	}
 
 	@Override
+	@Transactional(readOnly = true)
 	public Page<ProducerResponse> getAllUnarchivedByUser(Pageable pageable) {
 		Long userId = securityService.getCurrentUserId();
 		Page<Producer> producerPage = producerRepository.findByUserIdAndArchivedFalse(userId, pageable);

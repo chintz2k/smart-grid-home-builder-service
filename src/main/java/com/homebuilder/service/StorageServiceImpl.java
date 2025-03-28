@@ -329,6 +329,7 @@ public class StorageServiceImpl implements StorageService {
 	}
 
 	@Override
+	@Transactional(readOnly = true)
 	public Page<StorageResponse> getAllUnarchivedByUser(Pageable pageable) {
 		Long userId = securityService.getCurrentUserId();
 		Page<Storage> storagePage = storageRepository.findByUserIdAndArchivedFalse(userId, pageable);

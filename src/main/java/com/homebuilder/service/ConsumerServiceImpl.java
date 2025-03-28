@@ -347,6 +347,7 @@ public class ConsumerServiceImpl implements ConsumerService {
 	}
 
 	@Override
+	@Transactional(readOnly = true)
 	public Page<ConsumerResponse> getAllUnarchivedByUser(Pageable pageable) {
 		Long userId = securityService.getCurrentUserId();
 		Page<Consumer> consumerPage = consumerRepository.findByUserIdAndArchivedFalse(userId, pageable);
