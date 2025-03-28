@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author André Heinen
@@ -101,6 +102,12 @@ public class ProducerController {
 		Producer producer = producerService.updateProducer(request);
 		ProducerResponse dto = new ProducerResponse(producer);
 		return ResponseEntity.ok(dto);
+	}
+
+	@PutMapping("/setActiveByListNoSendEvent")
+	public ResponseEntity<Map<String, String>> setActiveByListAndNoSendEvent(@RequestBody Set<Long> idSet, @RequestParam boolean active) {
+		Map<String, String> map = producerService.setActiveByListAndNoSendEvent(idSet, active);
+		return ResponseEntity.ok().body(map);
 	}
 
 	@PutMapping("/{producerId}/archive")

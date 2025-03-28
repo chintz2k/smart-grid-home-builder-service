@@ -22,10 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * @author André Heinen
@@ -259,6 +256,35 @@ public class ConsumerServiceImpl implements ConsumerService {
 			}
 		}
 		throw new DeviceNotFoundException("Consumer not found");
+	}
+
+	@Override
+	@Transactional
+	public Map<String, String> setActiveByListAndNoSendEvent(Set<Long> idSet, boolean active) {
+		List<Consumer> consumerList = consumerRepository.findAllById(idSet);
+
+		if (consumerList.isEmpty()) {
+			return Map.of("warning", "No consumer found for the given IDs");
+		}
+
+		List<Consumer> consumersToChange = consumerList.stream()
+				.filter(consumer -> !consumer.isArchived() && consumer.isActive() != active)
+				.peek(consumer -> consumer.setActive(active))
+				.toList();
+
+		int success = consumersToChange.size();
+		int failed = consumerList.size() - success;
+
+		if (success > 0) {
+			consumerRepository.saveAll(consumersToChange);
+			return Map.of(
+					"message", "Successfully updated " + success + " consumer(s) and " + failed + " consumer(s) are already active or inactive",
+					"success", String.valueOf(success),
+					"failed", String.valueOf(failed)
+			);
+		}
+
+		return Map.of("warning", "All consumers are already " + (active ? "active" : "inactive") + " and no changes were made");
 	}
 
 	@Override

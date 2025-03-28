@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author André Heinen
@@ -24,6 +25,7 @@ public interface ProducerService {
 	Producer getProducerById(Long producerId);
 	Producer updateProducer(ProducerRequest request);
 	Map<String, String> setActive(Producer producer, boolean active, boolean sendEvent);
+	Map<String, String> setActiveByListAndNoSendEvent(Set<Long> idSet, boolean active);
 	Map<String, String> archiveProducer(Long producerId);
 	Map<String, String> deleteProducer(Long producerId);
 	Map<String, String> deleteAllProducersByOwnerId(Long ownerId);

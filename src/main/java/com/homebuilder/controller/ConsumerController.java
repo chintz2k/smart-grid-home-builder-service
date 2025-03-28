@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author André Heinen
@@ -101,6 +102,12 @@ public class ConsumerController {
 		Consumer consumer = consumerService.updateConsumer(request);
 		ConsumerResponse dto = new ConsumerResponse(consumer);
 		return ResponseEntity.ok(dto);
+	}
+
+	@PutMapping("/setActiveByListNoSendEvent")
+	public ResponseEntity<Map<String, String>> setActiveByListAndNoSendEvent(@RequestBody Set<Long> idSet, @RequestParam boolean active) {
+		Map<String, String> map = consumerService.setActiveByListAndNoSendEvent(idSet, active);
+		return ResponseEntity.ok().body(map);
 	}
 
 	@PutMapping("/{consumerId}/archive")

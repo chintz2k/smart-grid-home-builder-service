@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author André Heinen
@@ -24,6 +25,7 @@ public interface ConsumerService {
 	Consumer getConsumerById(Long consumerId);
 	Consumer updateConsumer(ConsumerRequest request);
 	Map<String, String> setActive(Consumer consumer, boolean active, boolean sendEvent);
+	Map<String, String> setActiveByListAndNoSendEvent(Set<Long> idSet, boolean active);
 	Map<String, String> archiveConsumer(Long consumerId);
 	Map<String, String> deleteConsumer(Long consumerId);
 	Map<String, String> deleteAllConsumersByOwnerId(Long ownerId);

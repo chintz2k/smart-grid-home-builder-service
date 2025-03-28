@@ -22,10 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * @author André Heinen
@@ -259,6 +256,35 @@ public class ProducerServiceImpl implements ProducerService {
 			}
 		}
 		throw new DeviceNotFoundException("Producer not found");
+	}
+
+	@Override
+	@Transactional
+	public Map<String, String> setActiveByListAndNoSendEvent(Set<Long> idSet, boolean active) {
+		List<Producer> producerList = producerRepository.findAllById(idSet);
+
+		if (producerList.isEmpty()) {
+			return Map.of("warning", "No producers found for the given IDs");
+		}
+
+		List<Producer> producersToChange = producerList.stream()
+				.filter(producer -> !producer.isArchived() && producer.isActive() != active)
+				.peek(producer -> producer.setActive(active))
+				.toList();
+
+		int success = producersToChange.size();
+		int failed = producerList.size() - success;
+
+		if (success > 0) {
+			producerRepository.saveAll(producersToChange);
+			return Map.of(
+					"message", "Successfully updated " + success + " producer(s) and " + failed + " producer(s) are already active or inactive",
+					"success", String.valueOf(success),
+					"failed", String.valueOf(failed)
+			);
+		}
+
+		return Map.of("warning", "All producers are already " + (active ? "active" : "inactive") + " and no changes were made");
 	}
 
 	@Override
