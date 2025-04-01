@@ -4,10 +4,7 @@ import com.homebuilder.dto.SmartConsumerTimeslotRequest;
 import com.homebuilder.entity.SmartConsumer;
 import com.homebuilder.entity.SmartConsumerProgram;
 import com.homebuilder.entity.SmartConsumerTimeslot;
-import com.homebuilder.exception.DeviceNotFoundException;
-import com.homebuilder.exception.SmartProgramNotAllowedForSmartConsumerException;
-import com.homebuilder.exception.TimeslotOverlapException;
-import com.homebuilder.exception.UnauthorizedAccessException;
+import com.homebuilder.exception.*;
 import com.homebuilder.repository.SmartConsumerProgramRepository;
 import com.homebuilder.repository.SmartConsumerRepository;
 import com.homebuilder.repository.SmartConsumerTimeslotRepository;
@@ -163,13 +160,18 @@ public class SmartConsumerTimeslotServiceImpl implements SmartConsumerTimeslotSe
 								if (!smartConsumer.getProgramList().contains(program)) {
 									throw new SmartProgramNotAllowedForSmartConsumerException("This Program is not executable on this SmartConsumer");
 								}
-								timeslot.setSmartConsumer(smartConsumer);
-								timeslot.setSmartConsumerProgram(program);
-								timeslot.setStartTime(request.getStartTimeAsInstant());
-								int durationInSeconds = program.getDurationInSeconds();
-								timeslot.setEndTime(timeslot.getStartTime().plusSeconds(durationInSeconds));
-								smartConsumerTimeslotRepository.save(timeslot);
-								return timeslot;
+								if (timeslot.getStartTime() != request.getStartTimeAsInstant()) {
+									timeslot.setStartTime(request.getStartTimeAsInstant());
+									int durationInSeconds = program.getDurationInSeconds();
+									timeslot.setEndTime(timeslot.getStartTime().plusSeconds(durationInSeconds));
+									List<SmartConsumerTimeslot> overlappingTimeslots = smartConsumerTimeslotRepository.findBySmartConsumerAndStartTimeLessThanAndEndTimeGreaterThan(smartConsumer, timeslot.getEndTime(), timeslot.getStartTime());
+									if (!overlappingTimeslots.isEmpty()) {
+										throw new TimeslotOverlapException("The timeslot overlaps with existing timeslots for this SmartConsumer.", overlappingTimeslots);
+									}
+									smartConsumerTimeslotRepository.save(timeslot);
+									return timeslot;
+								}
+								throw new CreateDeviceFailedException("No changes were made to the SmartConsumerTimeslot");
 							}
 							throw new UnauthorizedAccessException("Unauthorized access to SmartConsumerProgram with ID " + request.getSmartConsumerProgramId());
 						}

@@ -151,10 +151,20 @@ public class SmartConsumerProgramServiceImpl implements SmartConsumerProgramServ
 				SmartConsumer smartConsumer = smartConsumerRepository.findById(request.getSmartConsumerId()).orElse(null);
 				if (smartConsumer != null) {
 					if (securityService.canAccessDevice(smartConsumer)) {
-						program.setName(request.getName());
-						program.setDurationInSeconds(request.getDurationInSeconds());
-						program.setPowerConsumption(request.getPowerConsumption());
-						if (!Objects.equals(program.getName(), request.getName()) || program.getDurationInSeconds() != request.getDurationInSeconds() || program.getPowerConsumption() != request.getPowerConsumption()) {
+						boolean changed = false;
+						if (!Objects.equals(program.getName(), request.getName())) {
+							program.setName(request.getName());
+							changed = true;
+						}
+						if (program.getDurationInSeconds() != request.getDurationInSeconds()) {
+							program.setDurationInSeconds(request.getDurationInSeconds());
+							changed = true;
+						}
+						if (program.getPowerConsumption() != request.getPowerConsumption()) {
+							program.setPowerConsumption(request.getPowerConsumption());
+							changed = true;
+						}
+						if (changed) {
 							smartConsumerProgramRepository.save(program);
 							return program;
 						}
