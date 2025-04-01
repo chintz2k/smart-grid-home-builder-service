@@ -1,6 +1,7 @@
 package com.homebuilder.dto;
 
 import com.homebuilder.entity.Consumer;
+import com.homebuilder.entity.SmartConsumer;
 import com.homebuilder.exception.DeviceNotFoundException;
 
 /**
@@ -15,6 +16,7 @@ public class ConsumerResponse {
 	private final boolean archived;
 	private final double powerConsumption;
 	private final Long roomId;
+	private final boolean smart;
 
 	public ConsumerResponse(Consumer consumer) {
 		if (consumer == null) {
@@ -27,6 +29,7 @@ public class ConsumerResponse {
 		this.archived = consumer.isArchived();
 		this.powerConsumption = consumer.getPowerConsumption();
 		this.roomId = consumer.getRoom().getId();
+		this.smart = consumer instanceof SmartConsumer;
 	}
 
 	public Long getId() {
@@ -55,5 +58,9 @@ public class ConsumerResponse {
 
 	public Long getRoomId() {
 		return roomId;
+	}
+
+	public boolean isSmart() {
+		return smart;
 	}
 }
