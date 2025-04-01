@@ -110,11 +110,11 @@ public class SmartConsumerTimeslotServiceImpl implements SmartConsumerTimeslotSe
 	public Page<SmartConsumerTimeslot> getAllByUserId(Long userId, Pageable pageable) {
 		if (userId != null) {
 			if (securityService.isCurrentUserAdminOrSystem()) {
-				return smartConsumerTimeslotRepository.findAllByUserId(userId, pageable);
+				return smartConsumerTimeslotRepository.findAllByUserIdOrderByStartTimeAsc(userId, pageable);
 			}
 		}
 		userId = securityService.getCurrentUserId();
-		return smartConsumerTimeslotRepository.findAllByUserId(userId, pageable);
+		return smartConsumerTimeslotRepository.findAllByUserIdOrderByStartTimeAsc(userId, pageable);
 	}
 
 	@Override
@@ -122,11 +122,11 @@ public class SmartConsumerTimeslotServiceImpl implements SmartConsumerTimeslotSe
 	public Page<SmartConsumerTimeslot> getAllByUserIdAndByConsumerId(Long userId, Long consumerId, Pageable pageable) {
 		if (userId != null) {
 			if (securityService.isCurrentUserAdminOrSystem()) {
-				return smartConsumerTimeslotRepository.findAllByUserIdAndSmartConsumerId(userId, consumerId, pageable);
+				return smartConsumerTimeslotRepository.findAllByUserIdAndSmartConsumerIdOrderByStartTimeAsc(userId, consumerId, pageable);
 			}
 		}
 		userId = securityService.getCurrentUserId();
-		return smartConsumerTimeslotRepository.findAllByUserIdAndSmartConsumerId(userId, consumerId, pageable);
+		return smartConsumerTimeslotRepository.findAllByUserIdAndSmartConsumerIdOrderByStartTimeAsc(userId, consumerId, pageable);
 	}
 
 	@Override
