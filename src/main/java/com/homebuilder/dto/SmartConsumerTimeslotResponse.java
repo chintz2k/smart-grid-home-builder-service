@@ -21,6 +21,8 @@ public class SmartConsumerTimeslotResponse {
 	private final ZonedDateTime endTime;
 	private final ZonedDateTime cancelledAt;
 	private final SmartConsumerTimeslotStatusCodes status;
+	private final Long smartConsumerProgramId;
+	private final String smartConsumerProgramName;
 
 	public SmartConsumerTimeslotResponse(SmartConsumerTimeslot smartConsumerTimeslot, String timeZone) {
 		if (smartConsumerTimeslot == null) {
@@ -34,6 +36,8 @@ public class SmartConsumerTimeslotResponse {
 		this.endTime = convertInstantToZonedDateTime(smartConsumerTimeslot.getEndTime(), ZoneId.of(timeZone));
 		this.cancelledAt = convertInstantToZonedDateTime(smartConsumerTimeslot.getCancelledAt(), ZoneId.of(timeZone));
 		this.status = smartConsumerTimeslot.getStatus();
+		this.smartConsumerProgramId = smartConsumerTimeslot.getSmartConsumerProgram().getId();
+		this.smartConsumerProgramName = smartConsumerTimeslot.getSmartConsumerProgram().getName();
 	}
 
 	public Long getId() {
@@ -73,5 +77,13 @@ public class SmartConsumerTimeslotResponse {
 			return null;
 		}
 		return ZonedDateTime.ofInstant(instant, zoneId);
+	}
+
+	public Long getSmartConsumerProgramId() {
+		return smartConsumerProgramId;
+	}
+
+	public String getSmartConsumerProgramName() {
+		return smartConsumerProgramName;
 	}
 }
