@@ -68,13 +68,14 @@ public class StorageServiceImpl implements StorageService {
 		if (roomId != null) {
 			Room room = roomRepository.findById(roomId).orElse(null);
 			if (room != null) {
-				if (securityService.getCurrentUserId().equals(room.getUserId())) {
-					room.addDevice(storage);
-					storage.setRoom(room);
-					roomRepository.save(room);
-				} else {
-					throw new UnauthorizedAccessException("Unauthorized access to Room with ID " + roomId);
+				if (!securityService.isCurrentUserAdminOrSystem()) {
+					if (!securityService.getCurrentUserId().equals(room.getUserId())) {
+						throw new UnauthorizedAccessException("Unauthorized access to Room with ID " + roomId);
+					}
 				}
+				room.addDevice(storage);
+				storage.setRoom(room);
+				roomRepository.save(room);
 			}
 		}
 		return storage;
