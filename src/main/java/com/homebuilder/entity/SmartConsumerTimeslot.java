@@ -31,6 +31,8 @@ public class SmartConsumerTimeslot {
 
 	private boolean archived = false;
 
+	private Long energyTrackerId = null;
+
 	public SmartConsumerTimeslot() {
 		this.status = SmartConsumerTimeslotStatusCodes.FRESH;
 	}
@@ -105,5 +107,13 @@ public class SmartConsumerTimeslot {
 
 	public void setArchived(boolean archived) {
 		this.archived = archived;
+	}
+
+	public Long getEnergyTrackerId() {
+		return energyTrackerId;
+	}
+
+	public void setEnergyTrackerId(Long energyTrackerId) {
+		this.energyTrackerId = energyTrackerId;
 	}
 }

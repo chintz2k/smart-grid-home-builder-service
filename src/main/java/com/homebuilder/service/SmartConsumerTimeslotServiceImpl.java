@@ -1,9 +1,11 @@
 package com.homebuilder.service;
 
 import com.homebuilder.dto.SmartConsumerTimeslotRequest;
+import com.homebuilder.dto.SmartTimeslotTrackerEvent;
 import com.homebuilder.entity.SmartConsumer;
 import com.homebuilder.entity.SmartConsumerProgram;
 import com.homebuilder.entity.SmartConsumerTimeslot;
+import com.homebuilder.entity.SmartConsumerTimeslotStatusCodes;
 import com.homebuilder.exception.*;
 import com.homebuilder.repository.SmartConsumerProgramRepository;
 import com.homebuilder.repository.SmartConsumerRepository;
@@ -14,9 +16,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -30,13 +34,16 @@ public class SmartConsumerTimeslotServiceImpl implements SmartConsumerTimeslotSe
 	private final SmartConsumerProgramRepository smartConsumerProgramRepository;
 	private final SmartConsumerRepository smartConsumerRepository;
 
+	private final KafkaTemplate<String, Object> kafkaTemplate;
+
 	private final SecurityService securityService;
 
 	@Autowired
-	public SmartConsumerTimeslotServiceImpl(SmartConsumerTimeslotRepository smartConsumerTimeslotRepository, SmartConsumerProgramRepository smartConsumerProgramRepository, SmartConsumerRepository smartConsumerRepository, SecurityService securityService) {
+	public SmartConsumerTimeslotServiceImpl(SmartConsumerTimeslotRepository smartConsumerTimeslotRepository, SmartConsumerProgramRepository smartConsumerProgramRepository, SmartConsumerRepository smartConsumerRepository, KafkaTemplate<String, Object> kafkaTemplate, SecurityService securityService) {
 		this.smartConsumerTimeslotRepository = smartConsumerTimeslotRepository;
 		this.smartConsumerProgramRepository = smartConsumerProgramRepository;
 		this.smartConsumerRepository = smartConsumerRepository;
+		this.kafkaTemplate = kafkaTemplate;
 		this.securityService = securityService;
 	}
 
@@ -72,8 +79,9 @@ public class SmartConsumerTimeslotServiceImpl implements SmartConsumerTimeslotSe
 							throw new TimeslotOverlapException("The timeslot overlaps with existing timeslots for this SmartConsumer.", overlappingTimeslots);
 						}
 						smartConsumer.getTimeslotList().add(timeslot);
-						smartConsumerTimeslotRepository.save(timeslot);
+						SmartConsumerTimeslot savedTimeslot = smartConsumerTimeslotRepository.save(timeslot);
 						smartConsumerRepository.save(smartConsumer);
+						sendKafkaEvent(savedTimeslot);
 						return timeslot;
 					}
 					throw new UnauthorizedAccessException("Unauthorized access to SmartConsumerProgram with ID " + request.getSmartConsumerProgramId());
@@ -83,6 +91,17 @@ public class SmartConsumerTimeslotServiceImpl implements SmartConsumerTimeslotSe
 			throw new UnauthorizedAccessException("Unauthorized access to SmartConsumer with ID " + request.getSmartConsumerId());
 		}
 		throw new DeviceNotFoundException("SmartConsumer with ID " + request.getSmartConsumerId() + " not found");
+	}
+
+	private void sendKafkaEvent(SmartConsumerTimeslot timeslot) {
+		SmartTimeslotTrackerEvent event = new SmartTimeslotTrackerEvent();
+		event.setTimeslotId(timeslot.getId());
+		event.setDeviceId(timeslot.getSmartConsumer().getId());
+		event.setOwnerId(timeslot.getUserId());
+		event.setPowerConsumption(timeslot.getSmartConsumerProgram().getPowerConsumption());
+		event.setEventStart(timeslot.getStartTime());
+		event.setEventEnd(timeslot.getEndTime());
+		kafkaTemplate.send("smart-consumer-timeslot-created", event);
 	}
 
 	@Override
@@ -110,11 +129,11 @@ public class SmartConsumerTimeslotServiceImpl implements SmartConsumerTimeslotSe
 	public Page<SmartConsumerTimeslot> getAllByUserId(Long userId, Pageable pageable) {
 		if (userId != null) {
 			if (securityService.isCurrentUserAdminOrSystem()) {
-				return smartConsumerTimeslotRepository.findAllByUserIdOrderByStartTimeAsc(userId, pageable);
+				return smartConsumerTimeslotRepository.findAllByUserIdAndEndTimeGreaterThanOrderByStartTimeAsc(userId, Instant.now(), pageable);
 			}
 		}
 		userId = securityService.getCurrentUserId();
-		return smartConsumerTimeslotRepository.findAllByUserIdOrderByStartTimeAsc(userId, pageable);
+		return smartConsumerTimeslotRepository.findAllByUserIdAndEndTimeGreaterThanOrderByStartTimeAsc(userId, Instant.now(), pageable);
 	}
 
 	@Override
@@ -122,11 +141,11 @@ public class SmartConsumerTimeslotServiceImpl implements SmartConsumerTimeslotSe
 	public Page<SmartConsumerTimeslot> getAllByUserIdAndByConsumerId(Long userId, Long consumerId, Pageable pageable) {
 		if (userId != null) {
 			if (securityService.isCurrentUserAdminOrSystem()) {
-				return smartConsumerTimeslotRepository.findAllByUserIdAndSmartConsumerIdOrderByStartTimeAsc(userId, consumerId, pageable);
+				return smartConsumerTimeslotRepository.findAllByUserIdAndSmartConsumerIdAndEndTimeGreaterThanOrderByStartTimeAsc(userId, consumerId, Instant.now(), pageable);
 			}
 		}
 		userId = securityService.getCurrentUserId();
-		return smartConsumerTimeslotRepository.findAllByUserIdAndSmartConsumerIdOrderByStartTimeAsc(userId, consumerId, pageable);
+		return smartConsumerTimeslotRepository.findAllByUserIdAndSmartConsumerIdAndEndTimeGreaterThanOrderByStartTimeAsc(userId, consumerId, Instant.now(), pageable);
 	}
 
 	@Override
@@ -192,6 +211,11 @@ public class SmartConsumerTimeslotServiceImpl implements SmartConsumerTimeslotSe
 		SmartConsumerTimeslot timeslot = smartConsumerTimeslotRepository.findById(smartConsumerTimeslotId).orElse(null);
 		if (timeslot != null) {
 			if (securityService.canAccessTimeslot(timeslot)) {
+				if (timeslot.getEnergyTrackerId() != null) {
+					SmartTimeslotTrackerEvent event = new SmartTimeslotTrackerEvent();
+					event.setEnergyTrackerid(timeslot.getEnergyTrackerId());
+					kafkaTemplate.send("smart-consumer-timeslot-deleted", event);
+				}
 				Map<String, String> response = Map.of(
 						"message", "Successfully deleted SmartConsumerTimeslot with ID " + smartConsumerTimeslotId,
 						"id", smartConsumerTimeslotId.toString()
@@ -202,5 +226,26 @@ public class SmartConsumerTimeslotServiceImpl implements SmartConsumerTimeslotSe
 			throw new UnauthorizedAccessException("Unauthorized access to SmartConsumerTimeslot with ID " + smartConsumerTimeslotId);
 		}
 		throw new DeviceNotFoundException("SmartConsumerTimeslot with ID " + smartConsumerTimeslotId + " not found");
+	}
+
+	@Override
+	@Transactional
+	public Map<String, String> processTimeslotEnergyTrackerResponse(SmartTimeslotTrackerEvent event) {
+		SmartConsumerTimeslot timeslot = smartConsumerTimeslotRepository.findById(event.getTimeslotId()).orElse(null);
+		if (timeslot != null) {
+			if (event.getEnergyTrackerid() != null) {
+				if (timeslot.getEnergyTrackerId() == null) {
+					timeslot.setEnergyTrackerId(event.getEnergyTrackerid());
+					timeslot.setStatus(SmartConsumerTimeslotStatusCodes.ACCEPTED);
+					smartConsumerTimeslotRepository.save(timeslot);
+					return Map.of(
+							"message", "Successfully accepted SmartConsumerTimeslot with ID " + event.getTimeslotId(),
+							"status", timeslot.getStatus().toString(),
+							"id", event.getTimeslotId().toString()
+					);
+				}
+			}
+		}
+		throw new DeviceNotFoundException("SmartConsumerTimeslot with ID " + event.getTimeslotId() + " not found");
 	}
 }

@@ -18,8 +18,8 @@ public interface SmartConsumerTimeslotRepository extends JpaRepository<SmartCons
 
     List<SmartConsumerTimeslot> findBySmartConsumerAndStartTimeLessThanAndEndTimeGreaterThan(SmartConsumer smartConsumer, Instant end, Instant start);
 
-	Page<SmartConsumerTimeslot> findAllByUserIdOrderByStartTimeAsc(Long userId, Pageable pageable);
+	Page<SmartConsumerTimeslot> findAllByUserIdAndEndTimeGreaterThanOrderByStartTimeAsc(Long userId, Instant now, Pageable pageable);
 
-	Page<SmartConsumerTimeslot> findAllByUserIdAndSmartConsumerIdOrderByStartTimeAsc(Long userId, Long smartConsumerId, Pageable pageable);
+	Page<SmartConsumerTimeslot> findAllByUserIdAndSmartConsumerIdAndEndTimeGreaterThanOrderByStartTimeAsc(Long userId, Long smartConsumerId, Instant now, Pageable pageable);
 
 }

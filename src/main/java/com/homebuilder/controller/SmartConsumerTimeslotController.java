@@ -2,6 +2,7 @@ package com.homebuilder.controller;
 
 import com.homebuilder.dto.SmartConsumerTimeslotRequest;
 import com.homebuilder.dto.SmartConsumerTimeslotResponse;
+import com.homebuilder.dto.SmartTimeslotTrackerEvent;
 import com.homebuilder.entity.SmartConsumerTimeslot;
 import com.homebuilder.service.SmartConsumerTimeslotService;
 import jakarta.validation.Valid;
@@ -95,5 +96,14 @@ public class SmartConsumerTimeslotController {
 		List<SmartConsumerTimeslot> smartConsumerTimeslotList = smartConsumerTimeslotService.getAllSmartConsumerTimeslotsByOwner(ownerId);
 		List<SmartConsumerTimeslotResponse> dtoList = smartConsumerTimeslotList.stream().map(smartConsumerTimeslot -> new SmartConsumerTimeslotResponse(smartConsumerTimeslot, timeZone)).toList();
 		return ResponseEntity.ok(dtoList);
+	}
+
+	@PutMapping("/sysupdate")
+	@PreAuthorize("hasRole('ADMIN') or hasRole('SYSTEM')")
+	public ResponseEntity<Map<String, String>> processTimeslotEnergyTrackerResponse(
+			@RequestBody SmartTimeslotTrackerEvent event
+	) {
+		Map<String, String> success = smartConsumerTimeslotService.processTimeslotEnergyTrackerResponse(event);
+		return ResponseEntity.ok().body(success);
 	}
 }

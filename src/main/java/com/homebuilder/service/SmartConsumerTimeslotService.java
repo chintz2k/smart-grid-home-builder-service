@@ -1,6 +1,7 @@
 package com.homebuilder.service;
 
 import com.homebuilder.dto.SmartConsumerTimeslotRequest;
+import com.homebuilder.dto.SmartTimeslotTrackerEvent;
 import com.homebuilder.entity.SmartConsumerTimeslot;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,5 +22,6 @@ public interface SmartConsumerTimeslotService {
 	SmartConsumerTimeslot getSmartConsumerTimeslotById(Long smartConsumerTimeslotId);
 	SmartConsumerTimeslot updateSmartConsumerTimeslot(SmartConsumerTimeslotRequest request);
 	Map<String, String> deleteSmartConsumerTimeslot(Long smartConsumerTimeslotId);
+	Map<String, String> processTimeslotEnergyTrackerResponse(SmartTimeslotTrackerEvent event);
 
 }
