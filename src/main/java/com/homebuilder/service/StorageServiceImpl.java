@@ -7,6 +7,7 @@ import com.homebuilder.entity.Storage;
 import com.homebuilder.exception.CreateDeviceFailedException;
 import com.homebuilder.exception.DeviceNotFoundException;
 import com.homebuilder.exception.UnauthorizedAccessException;
+import com.homebuilder.kafka.StorageEvent;
 import com.homebuilder.repository.RoomRepository;
 import com.homebuilder.repository.StorageRepository;
 import com.homebuilder.security.SecurityService;
@@ -23,7 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
@@ -39,11 +39,11 @@ public class StorageServiceImpl implements StorageService {
 
 	private final SecurityService securityService;
 
-	private final KafkaTemplate<String, String> kafkaTemplate;
+	private final KafkaTemplate<String, Object> kafkaTemplate;
 	private final RoomRepository roomRepository;
 
 	@Autowired
-	public StorageServiceImpl(StorageRepository storageRepository, SecurityService securityService, KafkaTemplate<String, String> kafkaTemplate, RoomRepository roomRepository) {
+	public StorageServiceImpl(StorageRepository storageRepository, SecurityService securityService, KafkaTemplate<String, Object> kafkaTemplate, RoomRepository roomRepository) {
 		this.storageRepository = storageRepository;
 		this.securityService = securityService;
 		this.kafkaTemplate = kafkaTemplate;
@@ -250,10 +250,16 @@ public class StorageServiceImpl implements StorageService {
 				storage.setActive(active);
 				storageRepository.save(storage);
 				if (sendEvent) {
-					String event = String.format(
-							Locale.ENGLISH,
-							"{\"deviceId\": %d, \"ownerId\": %d, \"commercial\": %b, \"active\": %b, \"capacity\": %f, \"currentCharge\": %f, \"chargingPriority\": %d, \"consumingPriority\": %d, \"timestamp\": \"%s\"}",
-							storage.getId(), storage.getUserId(), securityService.isCurrentUserACommercialUser(), active, storage.getCapacity(), storage.getCurrentCharge(), storage.getChargingPriority(), storage.getConsumingPriority(), Instant.now());
+					StorageEvent event = new StorageEvent();
+					event.setDeviceId(storage.getId());
+					event.setOwnerId(storage.getUserId());
+					event.setCommercial(securityService.isCurrentUserACommercialUser());
+					event.setActive(active);
+					event.setCapacity(storage.getCapacity());
+					event.setCurrentCharge(storage.getCurrentCharge());
+					event.setChargingPriority(storage.getChargingPriority());
+					event.setConsumingPriority(storage.getConsumingPriority());
+					event.setTimestamp(Instant.now());
 					kafkaTemplate.send("storage-events", event).whenComplete((result, exception) -> {
 						if (exception != null) {
 							logger.error("Fehler beim Senden des Events: {}", exception.getMessage());

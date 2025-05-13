@@ -7,6 +7,7 @@ import com.homebuilder.entity.Room;
 import com.homebuilder.exception.CreateDeviceFailedException;
 import com.homebuilder.exception.DeviceNotFoundException;
 import com.homebuilder.exception.UnauthorizedAccessException;
+import com.homebuilder.kafka.ConsumerEvent;
 import com.homebuilder.repository.ConsumerRepository;
 import com.homebuilder.repository.RoomRepository;
 import com.homebuilder.security.SecurityService;
@@ -22,7 +23,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * @author André Heinen
@@ -36,11 +40,11 @@ public class ConsumerServiceImpl implements ConsumerService {
 
 	private final SecurityService securityService;
 
-	private final KafkaTemplate<String, String> kafkaTemplate;
+	private final KafkaTemplate<String, Object> kafkaTemplate;
 	private final RoomRepository roomRepository;
 
 	@Autowired
-	public ConsumerServiceImpl(ConsumerRepository consumerRepository, SecurityService securityService, KafkaTemplate<String, String> kafkaTemplate, RoomRepository roomRepository) {
+	public ConsumerServiceImpl(ConsumerRepository consumerRepository, SecurityService securityService, KafkaTemplate<String, Object> kafkaTemplate, RoomRepository roomRepository) {
 		this.consumerRepository = consumerRepository;
 		this.securityService = securityService;
 		this.kafkaTemplate = kafkaTemplate;
@@ -239,10 +243,13 @@ public class ConsumerServiceImpl implements ConsumerService {
 				consumer.setActive(active);
 				consumerRepository.save(consumer);
 				if (sendEvent) {
-					String event = String.format(
-							Locale.ENGLISH,
-							"{\"deviceId\": %d, \"ownerId\": %d, \"commercial\": %b, \"active\": %b, \"powerConsumption\": %f, \"timestamp\": \"%s\"}",
-							consumer.getId(), consumer.getUserId(), securityService.isCurrentUserACommercialUser(), active, consumer.getPowerConsumption(), Instant.now());
+					ConsumerEvent event = new ConsumerEvent();
+					event.setDeviceId(consumer.getId());
+					event.setOwnerId(consumer.getUserId());
+					event.setCommercial(securityService.isCurrentUserACommercialUser());
+					event.setActive(active);
+					event.setPowerConsumption(consumer.getPowerConsumption());
+					event.setTimestamp(Instant.now());
 					kafkaTemplate.send("consumer-events", event).whenComplete((result, exception) -> {
 						if (exception != null) {
 							logger.error("Fehler beim Senden des Events: {}", exception.getMessage());

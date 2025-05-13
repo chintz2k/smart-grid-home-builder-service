@@ -7,6 +7,7 @@ import com.homebuilder.entity.Room;
 import com.homebuilder.exception.CreateDeviceFailedException;
 import com.homebuilder.exception.DeviceNotFoundException;
 import com.homebuilder.exception.UnauthorizedAccessException;
+import com.homebuilder.kafka.ProducerEvent;
 import com.homebuilder.repository.ProducerRepository;
 import com.homebuilder.repository.RoomRepository;
 import com.homebuilder.security.SecurityService;
@@ -22,7 +23,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * @author André Heinen
@@ -36,11 +40,11 @@ public class ProducerServiceImpl implements ProducerService {
 
 	private final SecurityService securityService;
 
-	private final KafkaTemplate<String, String> kafkaTemplate;
+	private final KafkaTemplate<String, Object> kafkaTemplate;
 	private final RoomRepository roomRepository;
 
 	@Autowired
-	public ProducerServiceImpl(ProducerRepository producerRepository, SecurityService securityService, KafkaTemplate<String, String> kafkaTemplate, RoomRepository roomRepository) {
+	public ProducerServiceImpl(ProducerRepository producerRepository, SecurityService securityService, KafkaTemplate<String, Object> kafkaTemplate, RoomRepository roomRepository) {
 		this.producerRepository = producerRepository;
 		this.securityService = securityService;
 		this.kafkaTemplate = kafkaTemplate;
@@ -239,10 +243,15 @@ public class ProducerServiceImpl implements ProducerService {
 				producer.setActive(active);
 				producerRepository.save(producer);
 				if (sendEvent) {
-					String event = String.format(
-							Locale.ENGLISH,
-							"{\"deviceId\": %d, \"ownerId\": %d, \"commercial\": %b, \"active\": %b, \"powerType\": \"%s\", \"renewable\": %b, \"powerProduction\": %f, \"timestamp\": \"%s\"}",
-							producer.getId(), producer.getUserId(), securityService.isCurrentUserACommercialUser(), active, producer.getPowerType(), producer.isRenewable(), producer.getPowerProduction(), Instant.now());
+					ProducerEvent event = new ProducerEvent();
+					event.setDeviceId(producer.getId());
+					event.setOwnerId(producer.getUserId());
+					event.setCommercial(securityService.isCurrentUserACommercialUser());
+					event.setActive(active);
+					event.setPowerType(producer.getPowerType());
+					event.setRenewable(producer.isRenewable());
+					event.setPowerProduction(producer.getPowerProduction());
+					event.setTimestamp(Instant.now());
 					kafkaTemplate.send("producer-events", event).whenComplete((result, exception) -> {
 						if (exception != null) {
 							logger.error("Fehler beim Senden des Events: {}", exception.getMessage());
